@@ -11,6 +11,7 @@ import base64
 import platform
 from PIL.Image import Image
 import boto3
+import psycopg2
 import keys
 import os
 from pipeline import generate_image
@@ -47,9 +48,12 @@ class Params(BaseModel):
     guidance_scale: int
     inference_steps: int
 
-class IMAGE(BaseModel):
+class ImageModel(BaseModel):
     id: int
-    user_id: int
+    userID: int
+    photo_name: str
+    photo_url: str
+    is_deleted: bool
     
 
 @app.get("/")
@@ -74,67 +78,50 @@ async def generate(params: Params):
     buffer.seek(0)
     s3.upload_fileobj(buffer, BUCKET_NAME, image_name)
     os.remove(image_name)
+
+    #add photo to postgresql
+    #TODO edit
+    uploaded_file_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{image_name}"
+
+    conn = psycopg2.connect(
+        database="exampledb", user="docker", password="docker", host="0.0.0.0"
+    )
+    cur = conn.cursor()
+    cur.execute(
+        f"INSERT INTO photo (photo_name, photo_url) VALUES ('{image_name}', '{uploaded_file_url}' )"
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
     return Response(content=imgstr, media_type="image/png")
 
 @app.get("/images/")
 async def get_all_images():
-    my_bucket = s3_resource.Bucket(BUCKET_NAME)
-    for s3_object in my_bucket.objects.all():
-        path, filename = os.path.split(s3_object.key)
-        my_images.append(filename)
-        my_bucket.download_file(s3_object.key, filename)
-    
+    #TODO edit
+    conn = psycopg2.connect(
+        database="exampledb", user="docker", password="docker", host="0.0.0.0"
+    )
+    curr = conn.cursor()
+    curr.execute("SELECT * FROM photo ORDER BY id DESC")
+    rows = curr.fetchall()
+
+    formatted_photos = []
+    for row in rows:
+        formatted_photos.append(
+            ImageModel(
+                id=row[0], userID=row[1], photo_name=row[2], photo_url=row[3], is_deleted=row[4]
+            )
+        )
+
+    curr.close()
+    conn.close()
+    return formatted_photos
+
+
 @app.delete("/remove_images/")
 async def remove():
     for item in my_images:
         os.remove(item)
 
-
-# async def get_all_images():
-#     try:
-#         bucket = s3_resource.Bucket(BUCKET_NAME)
-#         for obj in OJH():
-#             temp_url = ob
-#             bucket.download_file(obj.key, )
-            
-        # # List all objects (images) in the S3 bucket
-        # response = s3.list_objects_v2(Bucket=BUCKET_NAME,Prefix='uploads/admin/')
-        # files = response.get("Contents")
-        # filename_test =[]
-        # for file in files:
-        #     # print(f"file_name: {file['Key']}, size: {file['Size']}")
-        #     filename_test.append(file['Key'])
-        # print(filename_test)
-        # # Extract the list of image URLs
-        # image_urls = []
-        # for obj in response.get("Contents", []):
-        #     # print(obj)
-        #     # new_obj= obj['Key'].split('/')[-1]
-        #     # print(new_obj)
-        #     image_urls.append({'url':                
-        #         s3.generate_presigned_url(
-        #             "get_object",
-        #             Params={"Bucket": BUCKET_NAME, "Key": obj["Key"]},
-        #             ExpiresIn=3600  # URL expiration time (in seconds)
-        #         ),'filename': obj['Key'].split('/')[-1]}
-        #     )
-        # print(image_urls)
-        # return {"image_urls": image_urls,'filename_test': filename_test}
-    # except Exception as e:
-    #     raise HTTPException(status_code=500, detail="Failed to fetch images") 
-
-# def retrieve(key: str):
-    
-
-    
-
-    # with autocast(device): 
-    #     image = pipe(prompt, guidance_scale=8.5).images[0]
-
-    # image.save(prompt + " testimage.png")
-
-    # buffer = BytesIO()
-    # image.save(buffer, format="PNG")z
-    # imgstr = base64.b64encode(buffer.getvalue())
-
-    # return Response(content=imgstr, media_type="image/png")

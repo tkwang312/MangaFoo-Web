@@ -41,35 +41,16 @@ app.add_middleware(
 )
 
 class Params(BaseModel):
+    modelID: str
     prompt: str
     negative_prompt: str
     guidance_scale: int
     inference_steps: int
 
-class Params(BaseModel):
+class IMAGE(BaseModel):
     id: int
     user_id: int
     
-
-# tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-large-patch14", torch_dtype=torch.float16)
-# text_encoder = CLIPTextModel.from_pretrained("openai/clip-vit-large-patch14", torch_dtype=torch.float16).to("cuda")
-
-# model_id_list = ["CompVis/stable-diffusion-v1-4", "stablediffusionapi/anything-v5"]
-
-# device = "cuda"
-# model_id = "stablediffusionapi/anything-v5"
-# # model_id = "CompVis/stable-diffusion-v1-4"
-# pipe = StableDiffusionPipeline.from_pretrained(model_id, use_safetensors=True, torch_dtype=torch.float16, token=token)
-# pipe.to(device)
-
-# lora_dirs = "Linaqruf/anime-nouveau-xl-lora"
-# pipe.load_lora_weights(lora_dirs)
-
-# for ldir, lsc in zip(lora_dirs, lora_scales):
-#     # Iteratively add new LoRA.
-#     pipe.load_lora_weights(ldir)
-#     # And scale them accordingly.
-#     pipe.fuse_lora(lora_scale = lsc)
 
 @app.get("/")
 def root():
@@ -78,24 +59,13 @@ def root():
 @app.post("/txt2img/")
 # async def generate(prompt: str, negative_prompt:str, guidance_scale: int, inference_steps: int): 
 async def generate(params: Params): 
+    modelID = int(params.modelID)
     prompt = params.prompt
     negative_prompt = params.negative_prompt
     guidance_scale = params.guidance_scale
     inference_steps = params.inference_steps
-    # with autocast(device): 
-    #     image = pipe(prompt, guidance_scale=8.5).images[0]
 
-    # image_name = f'{prompt[:100]}.png'
-    # buffer = BytesIO()
-    # image.save(image_name)
-    # image.save(buffer, format="PNG")
-    # imgstr = base64.b64encode(buffer.getvalue())
-    # buffer.seek(0)
-    # s3.upload_fileobj(buffer, BUCKET_NAME, image_name)
-    # os.remove(image_name)
-    # return Response(content=imgstr, media_type="image/png")
-
-    image = await generate_image(prompt, negative_prompt, guidance_scale, inference_steps)
+    image = await generate_image(modelID, prompt, negative_prompt, guidance_scale, inference_steps)
     image_name = f'{prompt[:100]}.png'
     buffer = BytesIO()
     image.save(image_name)

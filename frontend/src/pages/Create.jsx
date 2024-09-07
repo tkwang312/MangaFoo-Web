@@ -19,6 +19,8 @@ import {
   TabPanel,
   Flex,
   Box,
+  RadioGroup,
+  Radio
 
 } from "@chakra-ui/react";
 import axios from "axios";
@@ -34,27 +36,21 @@ const Create = () => {
   const [np, updateNp] = useState();
   const [gs, updateGs] = useState();
   const [is, updateIs] = useState();
+  const [m, updateModelID] = useState("0")
 
   const [loading, updateLoading] = useState();
   const [loading_imgs, updateLoading_imgs] = useState();
   const [images, updateImages] = useState();
 
-  const generate = async (p, np, gs, is) => {
+  const generate = async (m, p, np, gs, is) => {
     updateLoading(true);
     const pdict = {
+      modelID: m,
       prompt: p,
       negative_prompt: np,
       guidance_scale: gs,
       inference_steps: is
     };
-    
-    // try{
-    //   const response = await axios.get(`http://127.0.0.1:8000/txt2img/`, {params: pdict});
-    //   updateImage(`data:image/png;base64,${response.data}`);
-    //   updateLoading(false);
-    // } catch (error) {
-    //   console.error("There was an error fetching the todos:", error);
-    // }
     try {
       await fetch('http://127.0.0.1:8000/txt2img/', {
         method: "POST",
@@ -99,12 +95,16 @@ const Create = () => {
               <TabPanel>
                 <Heading>Create Character</Heading>
                 <Text marginBottom={"10px"}>
-                  This react application leverages the model trained by Stability AI and
-                  Runway ML to generate images using the Stable Diffusion Deep Learning
-                  model. The model can be found via github here{" "}
+                  please work generation PLEASE PLEASE ASFLKNAKSLFNAKLSN
                 </Text>
 
                 <Wrap marginBottom={"10px"}>
+                  <RadioGroup onChange={updateModelID} value={m}>
+                    <Stack direction='row'>
+                      <Radio value="0">neauveau</Radio>
+                      <Radio value="1">anythingxl</Radio>
+                    </Stack>
+                  </RadioGroup>
                   <Input
                     value={p}
                     onChange={(e) => updatePrompt(e.target.value)}
@@ -125,7 +125,7 @@ const Create = () => {
                     onChange={(e) => updateIs(e.target.value)}
                     width={"350px"}
                   ></Input>
-                  <Button onClick={(e) => generate(p, np, gs, is)} colorScheme={"yellow"}>
+                  <Button onClick={(e) => generate(m, p, np, gs, is)} colorScheme={"yellow"}>
                     Generate
                   </Button>
                 </Wrap>

@@ -16,9 +16,12 @@ import keys
 import os
 from pipeline import generate_image
 from pydantic import BaseModel
+from auth import auth_router
+import uvicorn
 
 # python -m uvicorn api:app --reload
 app = FastAPI()
+app.include_router(auth_router)
 
 my_images = []
 BUCKET_NAME = 'mangapics'
@@ -58,7 +61,8 @@ class ImageModel(BaseModel):
 
 @app.get("/")
 def root():
-    return {'haha'}
+    return {'stable diffusion api'}
+
 
 @app.post("/txt2img/")
 # async def generate(prompt: str, negative_prompt:str, guidance_scale: int, inference_steps: int): 
@@ -101,7 +105,7 @@ async def generate(params: Params):
 async def get_all_images():
     #TODO edit
     conn = psycopg2.connect(
-        database="exampledb", user="docker", password="docker", host="0.0.0.0"
+        database="exampledb", user="docker", password="docker", host="localhost"
     )
     curr = conn.cursor()
     curr.execute("SELECT * FROM photo ORDER BY id DESC")
@@ -124,4 +128,7 @@ async def get_all_images():
 async def remove():
     for item in my_images:
         os.remove(item)
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=False)
 

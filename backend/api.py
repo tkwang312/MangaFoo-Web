@@ -4,11 +4,8 @@ from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 import torch
 from torch import autocast
-from diffusers import StableDiffusionPipeline
-from transformers import CLIPTextModel, CLIPTokenizer
 from io import BytesIO
 import base64
-import platform
 from PIL.Image import Image
 import boto3
 import psycopg2
@@ -57,7 +54,7 @@ class ImageModel(BaseModel):
     photo_name: str
     photo_url: str
     is_deleted: bool
-    
+
 
 @app.get("/")
 def root():

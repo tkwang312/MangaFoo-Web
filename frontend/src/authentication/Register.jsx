@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import {
   Flex,
   Heading,
@@ -17,6 +17,7 @@ import {
 } from "@chakra-ui/react";
 import { FaUserAlt, FaLock } from "react-icons/fa";
 import { useNavigate , Route } from "react-router-dom";
+import UserContext from "./UserContext";
 import axios from 'axios';
 
 const CFaUserAlt = chakra(FaUserAlt);
@@ -28,6 +29,8 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [email, setEmail] = useState("")
+  const { setContextUsername, setContextPassword, setContextPFP } = useContext(UserContext);
+
 
   const navigate = useNavigate(); 
   const handleShowClick = () => setShowPassword(!showPassword);
@@ -45,14 +48,22 @@ const Register = () => {
       email: email
     }
     
-
     try {
       await fetch('http://127.0.0.1:8000/signup/', {
         method: "POST",
         headers: {"content-type": "application/json"},
         body: JSON.stringify(userDict)
-      });
+      }).then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      }).then(data => {
+        setContextUsername(username);
+        setContextPassword(password);
+        setContextPFP(data.pfpurl)
         navigate("/dashboard")
+      })
     } catch (error) {
         console.error("Signup failed:", error);
         alert("Signup failed. Username may already be taken.");

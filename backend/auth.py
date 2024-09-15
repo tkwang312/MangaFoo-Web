@@ -1,10 +1,11 @@
 import psycopg2
 import uvicorn
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 
+BUCKET_NAME = 'pfpbucket1'
 
 auth_router = APIRouter()
 
@@ -24,81 +25,78 @@ class LoginUser(BaseModel):
     email: str
     password: str
 
+class PFPModel(BaseModel):
+    email: str
+    pfpurl: str
 
-@auth_router.post("/signup")
+
+@auth_router.post("/signup", response_model=PFPModel)
 def signup(user: NewUser):
     username = user.username
     password = user.password
     email = user.email
+    image_name = 'defaultpfp88888888.jpg'
+    uploaded_file_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{image_name}"
 
     conn = psycopg2.connect(
         database="exampledb", user="docker", password="docker", host="localhost"
     )
     curr = conn.cursor()
     curr.execute(
-        f"INSERT INTO users (username, password, email) VALUES ('{username}', '{password}', '{email}')"
-        )
+        """
+        INSERT INTO users (username, password, email, pfpurl) 
+        VALUES (%s, %s, %s, %s)
+        """, 
+        (username, password, email, uploaded_file_url)  # Ensure the URL is passed as a parameter
+    )
     conn.commit()
     curr.close()
     conn.close()
+    
+    return PFPModel(email=email, pfpurl=uploaded_file_url)
 
 @auth_router.post("/signin")
 def signin(user: LoginUser):
     email = user.email
     password = user.password
 
-    # Establish connection to the database
     conn = psycopg2.connect(
         database="exampledb", user="docker", password="docker", host="localhost"
     )
     curr = conn.cursor()
 
     try:
-        # Parameterized query to prevent SQL injection
         curr.execute(
             "SELECT email, password FROM users WHERE email = %s AND password = %s",
             (email, password)
         )
 
-        # Fetch a single matching result (or None if no match)
         valid = curr.fetchone()
 
-        # If no match is found
         if valid is None:
             raise HTTPException(status_code=401, detail="Invalid credentials")
 
-        # If match is found, retrieve user details
         curr.execute(
-            "SELECT id, user_id, username, password, email FROM users WHERE email = %s",
+            "SELECT id, user_id, username, password, email, pfpurl FROM users WHERE email = %s",
             (email,)
         )
 
-        # Fetch the user's details
         values = curr.fetchone()
 
         if values is None:
             raise HTTPException(status_code=404, detail="User not found")
 
-        # Prepare the response dictionary
         res = {
             'id': values[0],
             'userID': values[1],
             'username': values[2],
             'password': values[3],
-            'email': values[4]
+            'email': values[4],
+            'pfpurl': values[5]
         }
 
-        # Return the user details as a JSON response
         return JSONResponse(content=res)
-        # return res
 
     finally:
-        # Ensure the cursor and connection are closed
         curr.close()
         conn.close()
-
-    
-
-
-
-

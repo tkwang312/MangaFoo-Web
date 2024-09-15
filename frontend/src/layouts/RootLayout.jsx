@@ -9,22 +9,6 @@ export default function RootLayout() {
       <Navbar />
       <Outlet />
     </React.Fragment>
-    // <VStack align="stretch">
-    //   <Navbar />
-    //   <Grid templateColumns="repeat(6, 1fr)" bg="gray.50">
-    //     <GridItem as="aside" colSpan="1" bg="purple.400" minHeight="100vh" p="30px">
-    //         <Sidebar />
-    //     </GridItem>
-    //     <GridItem as="main" colSpan="5" p="40px">
-    //         <Outlet />
-    //     </GridItem>
-    //   </Grid>
-    // </VStack>
-    // <>
-    //   <Sidebar />
-    //   <Navbar />
-    //   <Outlet />
-    // </>
 
   )
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import {
   Flex,
   Heading,
@@ -17,6 +17,7 @@ import {
 } from "@chakra-ui/react";
 import { FaUserAlt, FaLock } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import UserContext from "./UserContext";
 
 const CFaUserAlt = chakra(FaUserAlt);
 const CFaLock = chakra(FaLock);
@@ -26,8 +27,8 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const handleShowClick = () => setShowPassword(!showPassword);
-  const [userData, updateUserData] = useState();
   const navigate = useNavigate();
+  const { setContextUsername, setContextPassword, setContextPFP } = useContext(UserContext);
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -47,19 +48,16 @@ const Login = () => {
         }
         return response.json();
       }).then(data => {
-        updateUserData(data)
+        setContextUsername(data.username);
+        setContextPassword(password);
+        setContextPFP(data.pfpurl)
         navigate('/dashboard')
       })
       } catch (error) {
         console.error("There was an error signing in", error);
-        alert("Signup failed. Username may already be taken.")
+        alert("Signup failed. Username or password is wrong")
       }
   }
-  const getUserData = () => {
-    userData
-  }
-  
-
 
   return (
     <Flex

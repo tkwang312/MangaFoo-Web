@@ -40,12 +40,16 @@ function App() {
   const [password, setContextPassword] = useState('');
   const [pfp, setContextPFP] = useState(null);
   const [uid, setUID] = useState('')
+  const [selectedImage, setSelectedImage] = useState({});
+  const [updateToggle, setUpdateToggle] = useState(false);
 
   const contextValue = {
     username, setContextUsername,
     password, setContextPassword,
     pfp, setContextPFP,
-    uid, setUID
+    uid, setUID,
+    selectedImage, setSelectedImage,
+    updateToggle, setUpdateToggle
   };
 
   return (

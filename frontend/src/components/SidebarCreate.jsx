@@ -14,26 +14,28 @@ import UserContext from '../authentication/UserContext'
 
 const SidebarCreate = () => {
     const [navSize, changeNavSize] = useState("large")
-    const { uid } = useContext(UserContext)
-    const [allPhotos, setAllPhotos] = useState([]);
+    const [allPhotos, setAllPhotos] = useState([])
+    const { uid, updateToggle, selectedImage, setSelectedImage } = useContext(UserContext)
+    
     const navigate = useNavigate();
-    console.log(uid)
+    console.log(updateToggle)
     useEffect(() => { 
-        if (uid) {  // Ensure uid is available before fetching data
-            fetch(`http://127.0.0.1:8000/images/?uid=${uid}`)  // Adjust the URL if necessary
+        console.log(updateToggle)
+        if (uid) {  
+            fetch(`http://127.0.0.1:8000/images/?uid=${uid}`)  
                 .then((response) => response.json())
                 .then((data) => {
-                    console.log("Fetched data:", data);  // Log the fetched data
+                    console.log("Fetched data:", data);  
                     if (Array.isArray(data)) {
-                        setAllPhotos(data);  // Only set the state if data is an array
+                        setAllPhotos(data);  
                     } else {
                         console.error("Expected an array but got:", data);
-                        setAllPhotos([]);  // Set to an empty array if it's not an array
+                        setAllPhotos([]);
                     }
                 })
                 .catch((error) => console.error('Error fetching data:', error));
         }
-    }, [uid]);
+    }, [updateToggle]);
 
     const handleClickEdit = (e) => {
         e.preventDefault();
@@ -41,6 +43,16 @@ const SidebarCreate = () => {
         navigate("/edit")
 
     }
+
+    const handleImageClick = (imageId) => {
+        console.log("Image clicked with ID:", imageId);
+
+        const index = allPhotos.findIndex(item => item['id'] === imageId);
+        console.log(allPhotos[index])
+
+        setSelectedImage(allPhotos[index])
+    };
+
 
 
     return (
@@ -153,13 +165,11 @@ const SidebarCreate = () => {
                                                 w="150px"
                                                 src={photo.photo_url}
                                                 objectFit="cover"
+                                                onClick={() => handleImageClick(photo.id)}
                                             />
                                         )
                                     })
                                 }
-
-                                
-
                             </SimpleGrid>
                         </VStack>
                     </GridItem>

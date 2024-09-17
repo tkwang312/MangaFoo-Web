@@ -43,7 +43,7 @@ const Create = () => {
   const [loading_imgs, updateLoading_imgs] = useState();
   const [images, updateImages] = useState();
 
-  const { uid } = useContext(UserContext)
+  const { uid, updateToggle, setUpdateToggle } = useContext(UserContext)
 
   const generate = async (uid, m, p, np, gs, is) => {
     updateLoading(true);
@@ -67,6 +67,7 @@ const Create = () => {
       return response.text(); 
      }).then(data => {
       updateImage(data)
+      setUpdateToggle(!updateToggle)
      })
     } catch (error) {
       console.error("There was an error generating the image:", error);

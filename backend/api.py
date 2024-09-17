@@ -125,13 +125,35 @@ async def get_all_images(uid: str):
     return formatted_photos
 
 
-@app.delete("/remove_images/")
-async def remove():
-    for item in my_images:
-        os.remove(item)
+@app.delete("/remove_image/")
+async def remove(img: ImageModel):
+    id = img.id
+    userID = img.userID
+    photo_name = img.photo_name
+    photo_url = img.photo_url
+    is_deleted = True
 
+    s3.delete_object(Bucket=BUCKET_NAME, Key=photo_name)
+    print(f"Deleted image with key: {photo_name}")
 
+    conn = psycopg2.connect(
+        database="exampledb", user="docker", password="docker", host="localhost"
+    )
 
+    curr = conn.cursor()
+
+    try:
+        curr.execute("DELETE FROM images WHERE user_id = %s AND photo_name = %s", (userID, photo_name))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=404, detail="delete error")
+    finally:
+        curr.close()
+        conn.close()
+    
+    print("delete success")
+    
 
         
 

@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
-import { Flex, IconButton, Button, Divider, Text, Grid, GridItem, Box, VStack, Heading, SimpleGrid } from "@chakra-ui/react"
-import { NavLink } from "react-router-dom"
+import React, { useState, useContext, useEffect } from 'react'
+import { Image, Flex, IconButton, Button, Divider, Text, Grid, GridItem, Box, VStack, Heading, SimpleGrid } from "@chakra-ui/react"
+import { useNavigate } from "react-router-dom"
 import {
     FiMenu,
     FiHome,
@@ -10,10 +10,39 @@ import {
     FiChevronLeft,
     FiSettings
 } from 'react-icons/fi'
-
+import UserContext from '../authentication/UserContext'
 
 const SidebarCreate = () => {
     const [navSize, changeNavSize] = useState("large")
+    const { uid } = useContext(UserContext)
+    const [allPhotos, setAllPhotos] = useState([]);
+    const navigate = useNavigate();
+    console.log(uid)
+    useEffect(() => { 
+        if (uid) {  // Ensure uid is available before fetching data
+            fetch(`http://127.0.0.1:8000/images/?uid=${uid}`)  // Adjust the URL if necessary
+                .then((response) => response.json())
+                .then((data) => {
+                    console.log("Fetched data:", data);  // Log the fetched data
+                    if (Array.isArray(data)) {
+                        setAllPhotos(data);  // Only set the state if data is an array
+                    } else {
+                        console.error("Expected an array but got:", data);
+                        setAllPhotos([]);  // Set to an empty array if it's not an array
+                    }
+                })
+                .catch((error) => console.error('Error fetching data:', error));
+        }
+    }, [uid]);
+
+    const handleClickEdit = (e) => {
+        e.preventDefault();
+    
+        navigate("/edit")
+
+    }
+
+
     return (
         <Flex>
             <Flex
@@ -100,12 +129,7 @@ const SidebarCreate = () => {
                         mt={5}
                         _hover={{ background: 'purple.200' }}
                         icon={<FiSettings />}
-                        onClick={() => {
-                            if (navSize == "small")
-                                changeNavSize("large")
-                            // else
-                            //     changeNavSize("small")
-                        }}
+                        onClick={handleClickEdit}
                     />
                 </Flex>
             </Flex>
@@ -120,10 +144,21 @@ const SidebarCreate = () => {
                         <VStack align="stretch">
                             <Heading p="10px">Pictures</Heading>
                             <SimpleGrid spacing={2} columns={2} p="10px">
-                                <Box bg="gray.200" h="200px" w='150px' border="1px solid"> </Box>
-                                <Box bg="gray.200" h="200px" w='150px' border="1px solid"> </Box>
-                                <Box bg="gray.200" h="200px" w='150px' border="1px solid"> </Box>
-                                <Box bg="gray.200" h="200px" w='150px' border="1px solid"> </Box>
+                                {
+                                    allPhotos.map((photo) => {
+                                        return (
+                                            <Image
+                                                key={photo.id}
+                                                h="200px"
+                                                w="150px"
+                                                src={photo.photo_url}
+                                                objectFit="cover"
+                                            />
+                                        )
+                                    })
+                                }
+
+                                
 
                             </SimpleGrid>
                         </VStack>

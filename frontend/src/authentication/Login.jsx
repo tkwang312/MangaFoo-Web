@@ -28,7 +28,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const handleShowClick = () => setShowPassword(!showPassword);
   const navigate = useNavigate();
-  const { setContextUsername, setContextPassword, setContextPFP } = useContext(UserContext);
+  const { setContextUsername, setContextPassword, setContextPFP, setUID } = useContext(UserContext);
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -51,11 +51,12 @@ const Login = () => {
         setContextUsername(data.username);
         setContextPassword(password);
         setContextPFP(data.pfpurl)
+        setUID(data.userID)
         navigate('/dashboard')
       })
       } catch (error) {
         console.error("There was an error signing in", error);
-        alert("Signup failed. Username or password is wrong")
+        alert("Login failed. Username or password is wrong")
       }
   }
 

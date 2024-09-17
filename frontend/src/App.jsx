@@ -9,6 +9,7 @@ import Create from './pages/Create'
 import Profile from './pages/Profile'
 import Login from './authentication/Login'
 import Register from './authentication/Register'
+import Edit from "./pages/Edit.jsx";
 import React, { useState } from 'react'
 import UserContext from './authentication/UserContext.jsx'
 import { ViewIcon } from '@chakra-ui/icons'
@@ -27,6 +28,7 @@ const router = createBrowserRouter(
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/create" element={<Create />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/edit" element={<Edit />} />
       </Route>
 
     </>
@@ -37,11 +39,13 @@ function App() {
   const [username, setContextUsername] = useState('');
   const [password, setContextPassword] = useState('');
   const [pfp, setContextPFP] = useState(null);
+  const [uid, setUID] = useState('')
 
   const contextValue = {
     username, setContextUsername,
     password, setContextPassword,
-    pfp, setContextPFP
+    pfp, setContextPFP,
+    uid, setUID
   };
 
   return (

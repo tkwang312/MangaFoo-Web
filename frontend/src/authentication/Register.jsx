@@ -29,7 +29,7 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [email, setEmail] = useState("")
-  const { setContextUsername, setContextPassword, setContextPFP } = useContext(UserContext);
+  const { setContextUsername, setContextPassword, setContextPFP, setUID } = useContext(UserContext);
 
 
   const navigate = useNavigate(); 
@@ -61,7 +61,8 @@ const Register = () => {
       }).then(data => {
         setContextUsername(username);
         setContextPassword(password);
-        setContextPFP(data.pfpurl)
+        setContextPFP(data.pfpurl);
+        setUID(data.user_id)
         navigate("/dashboard")
       })
     } catch (error) {

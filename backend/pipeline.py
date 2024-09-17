@@ -19,8 +19,7 @@ vae = AutoencoderKL.from_pretrained(
 model_list = ["Linaqruf/animagine-xl-2.0", "eienmojiki/Anything-XL"]
 
 # Load and fuse LoRA weights
-# pipe.load_lora_weights(lora_model_id, weight_name=lora_filename)
-# pipe.fuse_lora(lora_scale=0.6)
+
 
 # Define prompts and generate image
 p = "basketball, face focus, cute, masterpiece, best quality, 1girl, sketch, monochrome, greyscale, green hair, sweater, looking at viewer, upper body, beanie, outdoors, night, turtleneck"
@@ -37,6 +36,8 @@ async def generate_image(modelID, prompt, negative_prompt, guidance_scale, infer
     )
     pipe.scheduler = EulerAncestralDiscreteScheduler.from_config(pipe.scheduler.config)
     pipe.to('cuda')
+    pipe.load_lora_weights(lora_model_id, weight_name=lora_filename)
+    pipe.fuse_lora(lora_scale=0.6)
 
     image = pipe(
         prompt, 
@@ -48,5 +49,5 @@ async def generate_image(modelID, prompt, negative_prompt, guidance_scale, infer
     ).images[0]
 
     # Unfuse LoRA before saving the image
-    # pipe.unfuse_lora()
+    pipe.unfuse_lora()
     return image

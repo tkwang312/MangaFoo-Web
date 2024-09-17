@@ -24,9 +24,10 @@ import {
 
 } from "@chakra-ui/react";
 import axios from "axios";
-import { useState } from "react";
+import { useState, useContext } from "react";
 import SidebarCreate from "../components/SidebarCreate"
 import ImageCard from '../components/ImageCard'
+import UserContext from "../authentication/UserContext";
 // import api from '../../../sd-api/api'
 
 
@@ -42,9 +43,12 @@ const Create = () => {
   const [loading_imgs, updateLoading_imgs] = useState();
   const [images, updateImages] = useState();
 
-  const generate = async (m, p, np, gs, is) => {
+  const { uid } = useContext(UserContext)
+
+  const generate = async (uid, m, p, np, gs, is) => {
     updateLoading(true);
     const pdict = {
+      user_id: uid,
       modelID: m,
       prompt: p,
       negative_prompt: np,
@@ -69,14 +73,12 @@ const Create = () => {
     } finally {
       updateLoading(false);
     }
-
   };
 
   const get_all_images = async() => {
     updateLoading_imgs(true);
     const result = await axios.get('https://127.0.0.1:8000/images/')
     updateImages(result.data);
-    
   }
   return (
     <Flex h="100%">
@@ -125,7 +127,7 @@ const Create = () => {
                     onChange={(e) => updateIs(e.target.value)}
                     width={"350px"}
                   ></Input>
-                  <Button onClick={(e) => generate(m, p, np, gs, is)} colorScheme={"yellow"}>
+                  <Button onClick={(e) => generate(uid, m, p, np, gs, is)} colorScheme={"yellow"}>
                     Generate
                   </Button>
                 </Wrap>

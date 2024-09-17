@@ -15,10 +15,10 @@ from pipeline import generate_image
 from pydantic import BaseModel
 from auth import auth_router
 import uvicorn
+from typing import List
 
 # python -m uvicorn api:app --reload
 app = FastAPI()
-app.include_router(auth_router)
 
 my_images = []
 BUCKET_NAME = 'mangapics'
@@ -41,7 +41,11 @@ app.add_middleware(
     allow_headers=["*"], # Allows all headers
 )
 
+app.include_router(auth_router)
+
+
 class Params(BaseModel):
+    user_id: str
     modelID: str
     prompt: str
     negative_prompt: str
@@ -50,7 +54,7 @@ class Params(BaseModel):
 
 class ImageModel(BaseModel):
     id: int
-    userID: int
+    userID: str
     photo_name: str
     photo_url: str
     is_deleted: bool
@@ -63,7 +67,8 @@ def root():
 
 @app.post("/txt2img/")
 # async def generate(prompt: str, negative_prompt:str, guidance_scale: int, inference_steps: int): 
-async def generate(params: Params): 
+async def generate(params: Params):
+    user_id = params.user_id 
     modelID = int(params.modelID)
     prompt = params.prompt
     negative_prompt = params.negative_prompt
@@ -85,27 +90,26 @@ async def generate(params: Params):
     uploaded_file_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{image_name}"
 
     conn = psycopg2.connect(
-        database="exampledb", user="docker", password="docker", host="0.0.0.0"
+        database="exampledb", user="docker", password="docker", host="localhost"
     )
     cur = conn.cursor()
     cur.execute(
-        f"INSERT INTO photo (photo_name, photo_url) VALUES ('{image_name}', '{uploaded_file_url}' )"
+        f"INSERT INTO images (user_id, photo_name, photo_url) VALUES ('{user_id}', '{image_name}', '{uploaded_file_url}')"
     )
     conn.commit()
     cur.close()
     conn.close()
 
-
     return Response(content=imgstr, media_type="image/png")
 
-@app.get("/images/")
-async def get_all_images():
+@app.get("/images/", response_model=List[ImageModel])
+async def get_all_images(uid: str):
     #TODO edit
     conn = psycopg2.connect(
         database="exampledb", user="docker", password="docker", host="localhost"
     )
     curr = conn.cursor()
-    curr.execute("SELECT * FROM photo ORDER BY id DESC")
+    curr.execute("SELECT * FROM images WHERE user_id = %s ORDER BY id DESC", (uid, ))
     rows = curr.fetchall()
 
     formatted_photos = []
@@ -125,6 +129,11 @@ async def get_all_images():
 async def remove():
     for item in my_images:
         os.remove(item)
+
+
+
+
+        
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=False)

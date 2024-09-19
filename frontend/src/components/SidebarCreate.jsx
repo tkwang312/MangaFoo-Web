@@ -15,8 +15,26 @@ import UserContext from '../authentication/UserContext'
 const SidebarCreate = () => {
     const [navSize, changeNavSize] = useState("large")
     const [allPhotos, setAllPhotos] = useState([])
-    const { uid, updateToggle, selectedImage, setSelectedImage } = useContext(UserContext)
+    const [selectedID, setSelectedID] = useState(0)
+    const { uid, updateToggle, selectedImage, setSelectedImage, setUpdateToggle } = useContext(UserContext)
+    const handleDelete = (e) => {
+
+        const imageDict = selectedImage
     
+        fetch('http://127.0.0.1:8000/remove_image/', {
+            method: "DELETE",
+            headers: {"content-type": "application/json"},
+            body: JSON.stringify(imageDict)
+        }).then((response) => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            response.json()
+        }).then((data) => {
+            setUpdateToggle(!updateToggle)
+            console.log('lol')   
+        })
+    }
     const navigate = useNavigate();
     console.log(updateToggle)
     useEffect(() => { 
@@ -49,8 +67,8 @@ const SidebarCreate = () => {
 
         const index = allPhotos.findIndex(item => item['id'] === imageId);
         console.log(allPhotos[index])
-
         setSelectedImage(allPhotos[index])
+        setSelectedID(index)
     };
 
 
@@ -155,6 +173,7 @@ const SidebarCreate = () => {
                     <GridItem as="main" colSpan="2" p="40px">
                         <VStack align="stretch">
                             <Heading p="10px">Pictures</Heading>
+                            <Button onClick={handleDelete}>Delete</Button>
                             <SimpleGrid spacing={2} columns={2} p="10px">
                                 {
                                     allPhotos.map((photo) => {
@@ -165,8 +184,8 @@ const SidebarCreate = () => {
                                                 w="150px"
                                                 src={photo.photo_url}
                                                 objectFit="cover"
-                                                onClick={() => handleImageClick(photo.id)}
-                                            />
+                                                border={allPhotos.findIndex(item => item['id'] === photo.id) === selectedID ? '5px solid #63b3ed' : 'none'}
+                                                onClick={() => handleImageClick(photo.id)}                                            />
                                         )
                                     })
                                 }

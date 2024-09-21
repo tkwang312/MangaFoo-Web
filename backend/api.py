@@ -154,7 +154,25 @@ async def remove(img: ImageModel):
     
     print("delete success")
     
+@app.get("/image/", response_model=List[ImageModel])
+async def getImage(uid: str, img_name: str):
+    conn = psycopg2.connect(
+    database="exampledb", user="docker", password="docker", host="localhost"
+    )
+    curr = conn.cursor()
+    curr.execute("SELECT * FROM images WHERE user_id = %s ORDER BY id DESC", (uid, ))
+    rows = curr.fetchall()
 
+    formatted_photos = []
+    for row in rows:
+        formatted_photos.append(
+            ImageModel(
+                id=row[0], userID=row[1], photo_name=row[2], photo_url=row[3], is_deleted=row[4]
+            )
+        )
+
+    curr.close()
+    conn.close()
         
 
 if __name__ == "__main__":

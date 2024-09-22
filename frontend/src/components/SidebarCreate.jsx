@@ -32,13 +32,10 @@ const SidebarCreate = () => {
             response.json()
         }).then((data) => {
             setUpdateToggle(!updateToggle)
-            console.log('lol')   
         })
     }
     const navigate = useNavigate();
-    console.log(updateToggle)
     useEffect(() => { 
-        console.log(updateToggle)
         if (uid) {  
             fetch(`http://127.0.0.1:8000/images/?uid=${uid}`)  
                 .then((response) => response.json())

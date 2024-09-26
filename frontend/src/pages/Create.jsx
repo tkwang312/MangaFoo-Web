@@ -100,37 +100,42 @@ const Create = () => {
                 <Text marginBottom={"10px"}>
                   please work generation PLEASE PLEASE ASFLKNAKSLFNAKLSN
                 </Text>
-
                 <Wrap marginBottom={"10px"}>
-                  <RadioGroup onChange={updateModelID} value={m}>
-                    <Stack direction='row'>
-                      <Radio value="0">neauveau</Radio>
-                      <Radio value="1">anythingxl</Radio>
-                    </Stack>
-                  </RadioGroup>
-                  <Input
-                    value={p}
-                    onChange={(e) => updatePrompt(e.target.value)}
-                    width={"350px"}
-                  ></Input>
-                  <Input
-                    value={np}
-                    onChange={(e) => updateNp(e.target.value)}
-                    width={"350px"}
-                  ></Input>
-                  <Input
-                    value={gs}
-                    onChange={(e) => updateGs(e.target.value)}
-                    width={"350px"}
-                  ></Input>
-                  <Input
-                    value={is}
-                    onChange={(e) => updateIs(e.target.value)}
-                    width={"350px"}
-                  ></Input>
-                  <Button onClick={(e) => generate(uid, m, p, np, gs, is)} colorScheme={"yellow"}>
-                    Generate
-                  </Button>
+                  <Stack direction="column">
+                    <RadioGroup onChange={updateModelID} value={m}>
+                      <Stack direction='row'>
+                        <Radio value="0">neauveau</Radio>
+                        <Radio value="1">anythingxl</Radio>
+                      </Stack>
+                    </RadioGroup>
+                    <Input
+                      value={p}
+                      onChange={(e) => updatePrompt(e.target.value)}
+                      width={"350px"}
+                      placeholder="Prompt"
+                    ></Input>
+                    <Input
+                      value={np}
+                      onChange={(e) => updateNp(e.target.value)}
+                      width={"350px"}
+                      placeholder="Negtative Prompt"
+                    ></Input>
+                    <Input
+                      value={gs}
+                      onChange={(e) => updateGs(e.target.value)}
+                      width={"350px"}
+                      placeholder="Guidance Scale"
+                    ></Input>
+                    <Input
+                      value={is}
+                      onChange={(e) => updateIs(e.target.value)}
+                      width={"350px"}
+                      placeholder="Inference Steps"
+                    ></Input>
+                    <Button onClick={(e) => generate(uid, m, p, np, gs, is)} colorScheme={"yellow"}>
+                      Generate
+                    </Button>
+                  </Stack>
                 </Wrap>
 
                 {loading ? (

@@ -154,25 +154,39 @@ async def remove(img: ImageModel):
     
     print("delete success")
     
-@app.get("/image/", response_model=List[ImageModel])
-async def getImage(uid: str, img_name: str):
+@app.get("/image/")
+async def get_image(img_url: str):
+    img_name = img_url.split('/')[-1]
     conn = psycopg2.connect(
-    database="exampledb", user="docker", password="docker", host="localhost"
+        database="exampledb", user="docker", password="docker", host="localhost"
     )
     curr = conn.cursor()
-    curr.execute("SELECT * FROM images WHERE user_id = %s ORDER BY id DESC", (uid, ))
-    rows = curr.fetchall()
+    
+    curr.execute("SELECT * FROM images WHERE photo_url = %s", (img_url,))
+    row = curr.fetchone()  # Get a single image
 
-    formatted_photos = []
-    for row in rows:
-        formatted_photos.append(
-            ImageModel(
-                id=row[0], userID=row[1], photo_name=row[2], photo_url=row[3], is_deleted=row[4]
-            )
+    if row:
+        image_data = ImageModel(
+            id=row[0],
+            userID=row[1],
+            photo_name=row[2],
+            photo_url=row[3],
+            is_deleted=row[4],
         )
+    else:
+        raise HTTPException(status_code=404, detail="Image not found")
 
     curr.close()
     conn.close()
+
+    try:
+        response = s3.get_object(Bucket=BUCKET_NAME, Key=img_name)
+        return {
+            "image_url": image_data.photo_url,
+            "image_data": base64.b64encode(response['Body'].read()).decode('utf-8')  # Base64 encode the image data
+        }
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Error fetching image: {str(e)}")
         
 
 if __name__ == "__main__":

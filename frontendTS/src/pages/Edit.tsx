@@ -90,79 +90,232 @@
 
 // export default Edit;
 
-import { useState } from 'react';
-import ReactCrop from 'react-image-crop';
-import 'react-image-crop/dist/ReactCrop.css';
+import { useState, useCallback, useEffect, useContext, useRef } from 'react';
+import Cropper from 'react-easy-crop';
+import { Button, Box, ChakraProvider, Flex, Image, SimpleGrid, Input } from "@chakra-ui/react";
+import SidebarCreate from "../components/SidebarCreate";
+import UserContext from '../authentication/UserContext';
+import plus_sign from './assets/plus_sign.png';
+import { select } from 'framer-motion/client';
+
+// import './App.css'
+
+
+// Helper function to crop the image
+const getCroppedImg = async (imageSrc, croppedAreaPixels, rotation = 0, flip = { horizontal: false, vertical: false }) => {
+  const image = new window.Image();
+  image.src = imageSrc;
+
+  return new Promise((resolve, reject) => {
+    image.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      // Set canvas size to cropped area
+      canvas.width = croppedAreaPixels.width;
+      canvas.height = croppedAreaPixels.height;
+
+      // Apply rotation if needed
+      ctx.save();
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.scale(flip.horizontal ? -1 : 1, flip.vertical ? -1 : 1);
+      ctx.drawImage(
+        image,
+        croppedAreaPixels.x,
+        croppedAreaPixels.y,
+        croppedAreaPixels.width,
+        croppedAreaPixels.height,
+        -canvas.width / 2,
+        -canvas.height / 2,
+        canvas.width,
+        canvas.height
+      );
+      ctx.restore();
+
+      // Convert canvas to Blob or Data URL
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const croppedImageUrl = URL.createObjectURL(blob);
+          resolve(croppedImageUrl);
+        } else {
+          reject(new Error('Canvas is empty'));
+        }
+      }, 'image/png');
+    };
+    image.onerror = (error) => {
+      reject(error);
+    };
+  });
+};
 
 const Edit = () => {
-    const [src, setSrc] = useState(null);
-    const [crop, setCrop] = useState({ aspect: 16 / 9 });
-    const [image, setImage] = useState(null);
-    const [output, setOutput] = useState(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [imageSrc, setImageSrc] = useState(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [rotation] = useState(0); // Default rotation
+  const [flip] = useState({ horizontal: false, vertical: false }); // Default flip
+  const [croppedImage, setCroppedImage] = useState(null);
+  const { selectedImage, setUpdateToggle, updateToggle } = useContext(UserContext);
+  const [images, setImages] = useState([null, null, null, null]);
+  const [selectedIndex, setSelectedIndex] = useState(null);
+  const [isCropping, setIsCropping] = useState(false)
+  const cropperRef = useRef(null);
 
-    const selectImage = (file) => {
-        setSrc(URL.createObjectURL(file));
-    };
+  useEffect(() => {
+        if (selectedImage) {
+            const newImages = [...images];
+            newImages[selectedIndex] = selectedImage.photo_url;
+            setImages(newImages);
+        }
 
-    const cropImageNow = () => {
-        const canvas = document.createElement('canvas');
-        const scaleX = image.naturalWidth / image.width;
-        const scaleY = image.naturalHeight / image.height;
-        canvas.width = crop.width;
-        canvas.height = crop.height;
-        const ctx = canvas.getContext('2d');
+    }, [selectedImage, selectedIndex]);
 
-        const pixelRatio = window.devicePixelRatio;
-        canvas.width = crop.width * pixelRatio;
-        canvas.height = crop.height * pixelRatio;
-        ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-        ctx.imageSmoothingQuality = 'high';
 
-        ctx.drawImage(
-            image,
-            crop.x * scaleX,
-            crop.y * scaleY,
-            crop.width * scaleX,
-            crop.height * scaleY,
-            0,
-            0,
-            crop.width,
-            crop.height,
-        );
+  const showCroppedImage = useCallback(async () => {
+    if (!croppedAreaPixels) {
+      console.error("Cropped area not defined yet.");
+      return;
+    }
+    try {
+      const croppedImage = await getCroppedImg(imageSrc, croppedAreaPixels, rotation, flip);
+      setCroppedImage(croppedImage);
+      exitCropping();
+    } catch (e) {
+      console.error(e);
+    }
+  }, [croppedAreaPixels, rotation, flip, imageSrc]);
 
-        // Converting to base64
-        const base64Image = canvas.toDataURL('image/jpeg');
-        setOutput(base64Image);
-    };
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const fileUrl = URL.createObjectURL(file);
+      setImageSrc(fileUrl);
+    }
+  };
 
-    return (
-        <div className="App">
-            <center>
-                <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                        selectImage(e.target.files[0]);
-                    }}
-                />
+  const exitCropping = () => {
+    setImageSrc(null); // Clear the image source to exit cropping state
+    setCrop({ x: 0, y: 0 }); // Reset crop position
+    setZoom(1); // Reset zoom level
+  };
+  const onCropComplete = (croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);  // Ensure we set this correctly
+  };
+
+  const handleCrop = () => {
+    setIsCropping(!isCropping)
+    console.log(isCropping)
+  }
+
+  return (
+    <div>
+    <Flex h="100%">
+        <Box>
+            <SidebarCreate />
+        </Box>
+        <Box as="main" flex='1' p="10px">
+            <ChakraProvider>
+                {/* <Input type="file" accept="image/*" onChange={handleFileChange} /> */}
                 <br />
-                <br />
-                <div>
-                    {src && (
-                        <div>
-                            <ReactCrop src={src} onImageLoaded={setImage}
-                                crop={crop} onChange={setCrop} />
-                            <br />
-                            <button onClick={cropImageNow}>Crop</button>
-                            <br />
-                            <br />
-                        </div>
+                <Button onClick={showCroppedImage}>Show Result</Button>
+                <Button onClick={handleCrop}>Handle Crop</Button>
+                <Box w='850px' h='1200px' borderWidth='1px' borderRadius='lg' overflow='hidden'>
+                         <SimpleGrid spacing={2} columns={2} p="2px">
+                             {images.map((img, index) => (
+                                <Box
+                                    key={index}
+                                    w='392px'
+                                    h='550px'
+                                    display="flex"
+                                    alignItems="center"
+                                    justifyContent="center"
+                                    position="relative"
+                                    bg='#E2E8F0'
+                                    border={index === selectedIndex ? '5px solid #63b3ed' : 'none'}
+                                    onClick={() => { setSelectedIndex(index); }}
+                                >
+                                {!img ? (
+                                    <img src={plus_sign} alt="plus-sign" style={{ width: '15%' }} />
+                                ) : (
+                                    isCropping ? (
+                                        img && (
+                                            <div>
+                                                <h3>Crop the image below:</h3>
+                                                <Cropper
+                                                    image={img}
+                                                    crop={crop}
+                                                    zoom={zoom}
+                                                    aspect={5 / 7}
+                                                    onCropChange={setCrop}
+                                                    onCropComplete={onCropComplete}
+                                                    onZoomChange={setZoom}
+                                                    // cropSize={{ width: '392px', height: '550px' }}
+                                                />
+                                            </div>
+                                        )
+                                    ) : (
+                                        croppedImage ? (
+                                            <div>
+                                                <h3>Cropped Image Preview:</h3>
+                                                <img src={croppedImage} alt="Cropped" />
+                                            </div>
+                                        ) : (
+                                            <img src={img} alt="Selected" />
+                                        )
+                                    )
+                                )}
+                                </Box>
+                            ))}
+                        </SimpleGrid>
+                    </Box>
+                {croppedImage && (
+                    <div>
+                        <h3>Cropped Image Preview:</h3>
+                        <img src={croppedImage} alt="Cropped" />
+                    </div>
                     )}
-                </div>
-                <div>{output && <img src={output} />}</div>
-            </center>
-        </div>
-    );
-}
+
+
+            </ChakraProvider>
+        </Box>
+    </Flex>
+    {/* <div className="container">
+      <div className="container-cropper">
+        <h2>Image Crop Demo</h2>
+        <input type="file" accept="image/*" onChange={handleFileChange} />
+        <br />
+        {imageSrc && (
+          <div>
+            <h3>Crop the image below:</h3>
+            <Cropper
+              image={imageSrc}
+              crop={crop}
+              zoom={zoom}
+              aspect={4 / 3}
+              onCropChange={setCrop}
+              onCropComplete={onCropComplete}
+              onZoomChange={setZoom}
+            />
+          </div>
+        )}
+
+        {croppedImage && (
+          <div>
+            <h3>Cropped Image Preview:</h3>
+            <img src={croppedImage} alt="Cropped" />
+          </div>
+        )}
+      </div>
+      <footer>
+        <button onClick={showCroppedImage}>
+          Show Result
+        </button>
+      </footer>
+    </div> */}
+    </div>
+  );
+};
 
 export default Edit;

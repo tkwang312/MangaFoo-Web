@@ -8,27 +8,9 @@ const EditMenu = () => {
     const [allPhotos, setAllPhotos] = useState([])
     const [selectedID, setSelectedID] = useState(0)
     const { uid, updateToggle, selectedImage, setSelectedImage, setUpdateToggle } = useContext(UserContext)
-    const handleDelete = (e) => {
-
-        const imageDict = selectedImage
-    
-        fetch('http://127.0.0.1:8000/remove_image/', {
-            method: "DELETE",
-            headers: {"content-type": "application/json"},
-            body: JSON.stringify(imageDict)
-        }).then((response) => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            response.json()
-        }).then((data) => {
-            setUpdateToggle(!updateToggle)
-        })
-    }
-    const navigate = useNavigate();
     useEffect(() => { 
         if (uid) {  
-            fetch(`http://127.0.0.1:8000/images/?uid=${uid}`)  
+            fetch(`http://127.0.0.1:8000/speechbubbles/`)  
                 .then((response) => response.json())
                 .then((data) => {
                     console.log("Fetched data:", data);  
@@ -61,25 +43,24 @@ const EditMenu = () => {
 
 
     const handleDragStart = (event, photo) => {
-        event.dataTransfer.setData('photoUrl', photo.photo_url);
+        event.dataTransfer.setData('photoUrl', photo.image_url);
     };
     
     return (
         <Flex>
             {/* Sidebar layout */}
-            <Grid gap={1}>
+            <Grid gap={1} bg="purple.100" h="2000">
                 <GridItem as="main" colSpan="2" p="40px">
                     <VStack align="stretch">
                         <Heading p="10px">Pictures</Heading>
-                        <Button onClick={handleDelete}>Delete</Button>
                         <SimpleGrid spacing={2} columns={2} p="10px">
                             {allPhotos.map((photo) => (
                                 <Image
                                     key={photo.id}
                                     h="200px"
                                     w="150px"
-                                    src={photo.photo_url}
-                                    objectFit="cover"
+                                    src={photo.image_url}
+                                    objectFit="contain"
                                     draggable="true"  // Make the image draggable
                                     onDragStart={(e) => handleDragStart(e, photo)}  // Handle drag start
                                     border={

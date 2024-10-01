@@ -59,6 +59,11 @@ class ImageModel(BaseModel):
     photo_url: str
     is_deleted: bool
 
+class SpeechBubbleModel(BaseModel):
+    id: int
+    image_name: str
+    image_url: str
+
 
 @app.get("/")
 def root():
@@ -187,7 +192,26 @@ async def get_image(img_url: str):
         }
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Error fetching image: {str(e)}")
-        
+    
+
+@app.get("/speechbubbles")
+async def get_speechbubbles():
+    conn = psycopg2.connect(
+        database="exampledb", user="docker", password="docker", host="localhost"
+    )
+    curr = conn.cursor()
+    curr.execute("SELECT * FROM speechbubbles")
+    rows = curr.fetchall()
+    formatted_images = []
+    for row in rows:
+        formatted_images.append(
+            SpeechBubbleModel(id=row[0], image_name=row[1], image_url=row[2])
+        )
+    
+    curr.close()
+    conn.close()
+    return formatted_images
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=False)

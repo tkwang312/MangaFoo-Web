@@ -44,7 +44,7 @@ const Edit = () => {
       newImage.src = photoUrl;
       newImage.onload = () => {
         const newImages = [...images];
-        newImages[cellIndex] = [...newImages[cellIndex], { image: newImage, x: 50, y: 50 }]; // Add the new image to the cell
+        newImages[cellIndex] = [...newImages[cellIndex], { image: newImage, x: 50, y: 50 }];
         setImages(newImages);
       };
     }
@@ -73,7 +73,7 @@ const Edit = () => {
       </Box>
       <Box as="main" flex="1" p="10px">
         <ChakraProvider>
-          <Box w="850px" h="1200px" borderWidth="1px" borderRadius="lg" overflow="hidden">
+          <Box w="1100px" h="1400px" borderWidth="1px" borderRadius="lg" overflow="hidden">
             <SimpleGrid spacing={2} columns={2} p="2px">
               {images.map((cellImages, cellIndex) => (
                 <Box

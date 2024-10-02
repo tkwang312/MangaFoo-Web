@@ -73,7 +73,7 @@ const Edit = () => {
       </Box>
       <Box as="main" flex="1" p="10px">
         <ChakraProvider>
-          <Box w="1100px" h="1400px" borderWidth="1px" borderRadius="lg" overflow="hidden">
+          <Box w="1100px" h="1400px" borderWidth="1px" borderRadius="lg" overflow="visible">
             <SimpleGrid spacing={2} columns={2} p="2px">
               {images.map((cellImages, cellIndex) => (
                 <Box
@@ -100,6 +100,8 @@ const Edit = () => {
                             image={imgObj.image}
                             x={imgObj.x}
                             y={imgObj.y}
+                            width={512}
+                            height={768}
                             draggable
                             onDragEnd={(e) => updateImagePosition(e, cellIndex, imageIndex)}
                             ref={(node) => {

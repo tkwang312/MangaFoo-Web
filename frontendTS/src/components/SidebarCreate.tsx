@@ -36,6 +36,7 @@ const SidebarCreate = () => {
             setUpdateToggle(!updateToggle)
         })
     }
+
     useEffect(() => { 
         if (uid) {  
             fetch(`http://127.0.0.1:8000/images/?uid=${uid}`)  
@@ -59,6 +60,19 @@ const SidebarCreate = () => {
         navigate("/edit")
 
     }
+    const handleClickGenerate = (e) => {
+        e.preventDefault();
+    
+        navigate("/create")
+
+    }
+
+    const handleClickProfile = (e) => {
+        e.preventDefault();
+    
+        navigate("/profile")
+
+    }
 
     const handleImageClick = (imageId) => {
         console.log("Image clicked with ID:", imageId);
@@ -76,7 +90,6 @@ const SidebarCreate = () => {
     
     return (
         <Flex>
-            {/* Sidebar navigation */}
             <Flex
                 h="1080px"
                 w="60px"
@@ -92,31 +105,33 @@ const SidebarCreate = () => {
                         onClick={() => changeNavSize(navSize === "small" ? "large" : "small")}
                         bg="purple.100"
                     />
-                    <IconButton
+                    {/* <IconButton
                         background="none"
                         mt={5}
                         _hover={{ background: 'purple.300' }}
                         icon={<FiMenu />}
                         onClick={() => changeNavSize(navSize === "small" ? "large" : "small")}
-                    />
+                    /> */}
                     <IconButton
                         background="none"
                         mt={5}
                         _hover={{ background: 'purple.300' }}
                         icon={<FiUser />}
+                        onClick={handleClickGenerate}
                     />
                     <IconButton
                         background="none"
                         mt={5}
                         _hover={{ background: 'purple.300' }}
                         icon={<FiCalendar />}
+                        onClick={handleClickEdit}
                     />
                     <IconButton
                         background="none"
                         mt={5}
                         _hover={{ background: 'purple.300' }}
                         icon={<FiSettings />}
-                        onClick={handleClickEdit}
+                        onClick={handleClickProfile}
                     />
                 </Flex>
             </Flex>

@@ -1,10 +1,11 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useContext } from 'react';
 import { Box, Button, ChakraProvider, Flex, HStack, SimpleGrid } from "@chakra-ui/react";
 import { Stage, Layer, Image as KonvaImage, Transformer } from "react-konva";
 import SidebarCreate from "../components/SidebarCreate";
 import plus_sign from './assets/plus_sign.png';
 import EditMenu from '../components/EditMenu';
 import { EditableText } from "./utils/EditableText";
+import UserContext from '../authentication/UserContext';
 
 const WIDTH = 500;
 const HEIGHT = 700;
@@ -19,7 +20,9 @@ const Edit = () => {
   const [historyStep, setHistoryStep] = useState(0);
   const [selectedTextIndex, setSelectedTextIndex] = useState<number | null>(null);
   const [texts, setTexts] = useState<Array<any>>([]);
-  
+
+  const {uid} = useContext(UserContext)
+
   const handleSelect = (cellIndex, imageIndex) => {
     setSelectedCellIndex(cellIndex);
     setSelectedImageIndex(imageIndex);
@@ -160,6 +163,33 @@ const Edit = () => {
     setImages(nextImages);
     setHistoryStep(historyStep + 1);
   };
+
+  const stageRef = useRef(null); 
+
+  const handleSave = async() => {
+    if (stageRef.current) {
+      const stageJson = stageRef.current.toJSON();
+      const stageModelJson = { user_id: uid, canvas_state: JSON.parse(stageJson)}
+      console.log('Stage JSON:', stageJson);
+      console.log(uid)
+
+      try {
+        await fetch('http://127.0.0.1:8000/save_canvas_state/', {
+          method: "POST",
+          headers: { "Content-Type": "application/json" }, 
+          body: JSON.stringify(stageModelJson),
+       }).then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.text(); 
+       })
+      } catch (error) {
+        console.error("There was an error saving the stage:", error);
+      } 
+    };
+
+  };
   
 
   useEffect(() => {
@@ -192,6 +222,9 @@ const Edit = () => {
                 <Button onClick={handleAddText}>
                   Add Text Box
                 </Button>
+                <Button onClick={handleSave}>
+                  Save
+                </Button>
               </HStack>
           <Box w="1100px" h="1400px" borderWidth="1px" borderRadius="lg" overflow="visible">
             <SimpleGrid spacing={2} columns={2} p="2px">
@@ -212,7 +245,7 @@ const Edit = () => {
                   {cellImages.length === 0 ? (
                     <img src={plus_sign} alt="plus-sign" style={{ width: '15%' }} />
                   ) : (
-                    <Stage width={WIDTH} height={HEIGHT}>
+                    <Stage ref={stageRef} width={WIDTH} height={HEIGHT}>
                       <Layer>
                         {cellImages.map((imgObj, imageIndex) => (
                           <KonvaImage

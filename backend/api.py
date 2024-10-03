@@ -15,7 +15,9 @@ from pipeline import generate_image
 from pydantic import BaseModel
 from auth import auth_router
 import uvicorn
-from typing import List
+from typing import List, Dict, Any
+import json
+
 
 # python -m uvicorn api:app --reload
 app = FastAPI()
@@ -63,6 +65,10 @@ class SpeechBubbleModel(BaseModel):
     id: int
     image_name: str
     image_url: str
+
+class CanvasState(BaseModel):
+    user_id: str
+    canvas_state: Dict[str, Any]
 
 
 @app.get("/")
@@ -212,7 +218,49 @@ async def get_speechbubbles():
     conn.close()
     return formatted_images
 
+@app.post("/save_canvas_state/")
+def save_canvas_state(state: CanvasState):
+    user_id = state.user_id
+    canvas_state = json.dumps(state.canvas_state) 
+    conn = psycopg2.connect(
+        database="exampledb", user="docker", password="docker", host="localhost"
+    )
+    curr = conn.cursor()
+
+    new_state = CanvasState(
+        user_id=state.user_id,
+        canvas_state=state.canvas_state
+    )
+    curr.execute(
+        "INSERT INTO konva_states (user_id, canvas_states) VALUES (%s, %s)",
+        (user_id, canvas_state) 
+    )
+    conn.commit()
+    curr.close()
+    conn.close()
+    return new_state
+
+
+@app.get("/load_canvas_state/{user_id}")
+def load_canvas_state(uid: int):
+    conn = psycopg2.connect(
+        database="exampledb", user="docker", password="docker", host="localhost"
+    )
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT * FROM konva_states WHERE user_id = %s ORDER BY id DESC", (uid, )
+    )
+    canvas_state = cur.fetchone()
+    if canvas_state:
+        return {"canvas_state": canvas_state.canvas_state}
+    return {"error": "Canvas state not found!"}
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=False)
 
+
+# {
+#   "user_id": "079325f8-71d6-422b-ab21-3b4971dbce3f",
+#   "canvas_state": {"attrs":{"width":500,"height":700},"className":"Stage","children":[{"attrs":{},"className":"Layer","children":[{"attrs":{"x":2.9988266919016553,"y":298.0022056557772,"scaleX":0.5,"scaleY":0.5,"draggable":true},"className":"Image"},{"attrs":{"x":230.00449352037657,"y":20.999742080574435,"scaleX":0.5,"scaleY":0.5,"draggable":true},"className":"Image"}]},{"attrs":{},"className":"Layer","children":[]}]}
+# }

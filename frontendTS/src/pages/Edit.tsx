@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { Box, ChakraProvider, Flex, SimpleGrid } from "@chakra-ui/react";
+import { Box, Button, ChakraProvider, Flex, HStack, SimpleGrid } from "@chakra-ui/react";
 import { Stage, Layer, Image as KonvaImage, Transformer } from "react-konva";
 import SidebarCreate from "../components/SidebarCreate";
 import plus_sign from './assets/plus_sign.png';
 import EditMenu from '../components/EditMenu';
+import { EditableText } from "./utils/EditableText";
 
 const WIDTH = 500;
 const HEIGHT = 700;
@@ -13,26 +14,110 @@ const Edit = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null); 
   const [selectedCellIndex, setSelectedCellIndex] = useState<number | null>(null); 
   const transformerRef = useRef<any>(null); 
-  const imageRefs = useRef([]); 
+  const imageRefs = useRef([]);
+  const [history, setHistory] = useState<Array<Array<Array<any>>>>([[[...images]]]);
+  const [historyStep, setHistoryStep] = useState(0);
+  const [selectedTextIndex, setSelectedTextIndex] = useState<number | null>(null);
+  const [texts, setTexts] = useState<Array<any>>([]);
+  
   const handleSelect = (cellIndex, imageIndex) => {
     setSelectedCellIndex(cellIndex);
     setSelectedImageIndex(imageIndex);
   };
 
+
+  const deepCloneImages = (images) => {
+    return images.map(cellImages =>
+      cellImages.map(imageObj => ({
+        ...imageObj,
+        image: imageObj.image,
+      }))
+    );
+  };
+
+  const updateImage = (updatedImage, cellIndex, imageIndex) => {
+    const newImages = deepCloneImages(images);
+    newImages[cellIndex][imageIndex] = updatedImage;
+  
+    setImages(newImages);
+  
+    const newHistory = history.slice(0, historyStep + 1);
+    setHistory([...newHistory, deepCloneImages(newImages)]);
+    setHistoryStep(newHistory.length);
+  
+    console.log("History after scaling update:", newHistory);
+  };
+
   const updateImagePosition = (e, cellIndex, imageIndex) => {
-    const newImages = [...images];
-    newImages[cellIndex][imageIndex] = {
-      ...newImages[cellIndex][imageIndex],
+    const img = images[cellIndex][imageIndex];
+    const updatedImage = {
+      ...img,
       x: e.target.x(),
       y: e.target.y(),
     };
-    setImages(newImages);
+  
+    updateImage(updatedImage, cellIndex, imageIndex);
+  };
+
+  const handleResize = (node, cellIndex, imageIndex) => {
+    const updatedImage = {
+      ...images[cellIndex][imageIndex],
+      scaleX: node.scaleX(),
+      scaleY: node.scaleY(),
+    };
+    console.log("Resizing:", updatedImage)
+    updateImage(updatedImage, cellIndex, imageIndex);
+  };
+
+  const handleAddText = () => {
+    const newText = { x: 100, y: 100, text: "New Text", width: 200, isEditing: false, isTransforming: false };
+    setTexts([...texts, newText]);
+    setSelectedTextIndex(texts.length);
+  };
+
+  const toggleEdit = (index: number) => {
+    const newTexts = [...texts];
+    newTexts[index].isEditing = !newTexts[index].isEditing;
+    setTexts(newTexts);
+    console.log(newTexts[index].isEditing)
+  };
+
+  const toggleTransform = (index: number) => {
+    const newTexts = [...texts];
+    newTexts[index].isTransforming = !newTexts[index].isTransforming;
+    setTexts(newTexts);
+  };
+
+  const handleTextChange = (index: number, newText: string) => {
+    const newTexts = [...texts];
+    newTexts[index].text = newText;
+    setTexts(newTexts);
+  };
+
+  const handleResizeText = (index, newWidth, newHeight) => {
+    const newTexts = [...texts];
+    newTexts[index] = { ...newTexts[index], width: newWidth };
+    setTexts(newTexts);
+  };
+
+    const handleTextDragEnd = (index: number, x: number, y: number) => {
+    const newTexts = [...texts];
+    newTexts[index].x = x;
+    newTexts[index].y = y;
+    setTexts(newTexts);
   };
 
   const addTransformer = (node) => {
     if (node && transformerRef.current) {
       transformerRef.current.nodes([node]); 
       transformerRef.current.getLayer().batchDraw();
+
+      transformerRef.current.on('transformend', () => {
+        if (selectedCellIndex !== null && selectedImageIndex !== null) {
+          console.log("Transform End: scaleX, scaleY update");
+          handleResize(node, selectedCellIndex, selectedImageIndex); 
+        }
+      });
     }
   };
 
@@ -46,13 +131,36 @@ const Edit = () => {
         const newImages = [...images];
         newImages[cellIndex] = [...newImages[cellIndex], { image: newImage, x: 50, y: 50 }];
         setImages(newImages);
+
+        const newHistory = history.slice(0, historyStep + 1);
+        setHistory([...newHistory, newImages]);
+        setHistoryStep(newHistory.length);
       };
     }
   };
 
   const handleDragOver = (event) => {
-    event.preventDefault(); 
+    event.preventDefault();
   };
+  
+  const handleUndo = () => {
+    if (historyStep === 0) {
+      return;
+    }
+    const previousImages = history[historyStep - 1];
+    setImages(previousImages);
+    setHistoryStep(historyStep - 1);
+  };
+
+  const handleRedo = () => {
+    if (historyStep === history.length - 1) {
+      return;
+    }
+    const nextImages = history[historyStep + 1];
+    setImages(nextImages);
+    setHistoryStep(historyStep + 1);
+  };
+  
 
   useEffect(() => {
     
@@ -63,6 +171,7 @@ const Edit = () => {
       imageRefs.current[selectedCellIndex][selectedImageIndex]
     ) {
       addTransformer(imageRefs.current[selectedCellIndex][selectedImageIndex]);
+      
     }
   }, [selectedCellIndex, selectedImageIndex]);
 
@@ -73,6 +182,17 @@ const Edit = () => {
       </Box>
       <Box as="main" flex="1" p="10px">
         <ChakraProvider>
+          <HStack spacing={4} mt={4}>
+                <Button onClick={handleUndo} isDisabled={historyStep === 0}>
+                  Undo
+                </Button>
+                <Button onClick={handleRedo} isDisabled={historyStep === history.length - 1}>
+                  Redo
+                </Button>
+                <Button onClick={handleAddText}>
+                  Add Text Box
+                </Button>
+              </HStack>
           <Box w="1100px" h="1400px" borderWidth="1px" borderRadius="lg" overflow="visible">
             <SimpleGrid spacing={2} columns={2} p="2px">
               {images.map((cellImages, cellIndex) => (
@@ -83,11 +203,11 @@ const Edit = () => {
                   display="flex"
                   alignItems="center"
                   justifyContent="center"
-                  bg="#E2E8F0"
+                  bg="white"
                   position="relative"
                   onDrop={(e) => handleDrop(e, cellIndex)} 
                   onDragOver={handleDragOver} 
-                  border={selectedCellIndex === cellIndex ? '5px solid #63b3ed' : 'none'}
+                  border={selectedCellIndex === cellIndex ? '5px solid #63b3ed' : '3px solid black'}
                 >
                   {cellImages.length === 0 ? (
                     <img src={plus_sign} alt="plus-sign" style={{ width: '15%' }} />
@@ -100,8 +220,8 @@ const Edit = () => {
                             image={imgObj.image}
                             x={imgObj.x}
                             y={imgObj.y}
-                            width={512}
-                            height={768}
+                            scaleX={imgObj.scaleX || 0.5} 
+                            scaleY={imgObj.scaleY || 0.5} 
                             draggable
                             onDragEnd={(e) => updateImagePosition(e, cellIndex, imageIndex)}
                             ref={(node) => {
@@ -115,11 +235,29 @@ const Edit = () => {
                               }
                             }}
                             onClick={() => handleSelect(cellIndex, imageIndex)}
-                          />
-                        ))}
+                            />
+                          ))}
                         {selectedCellIndex === cellIndex && selectedImageIndex !== null && (
                           <Transformer ref={transformerRef} />
                         )}
+                        </Layer>
+                        <Layer>
+                        {texts.map((textObj, index) => (
+                          <EditableText
+                            key={index}
+                            x={textObj.x}
+                            y={textObj.y}
+                            text={textObj.text}
+                            isEditing={textObj.isEditing}
+                            isTransforming={textObj.isTransforming} 
+                            onToggleEdit={() => toggleEdit(index)}
+                            onToggleTransform={() => toggleTransform(index)}
+                            onChange={(newText) => handleTextChange(index, newText)}
+                            onResize={(newWidth, newHeight) => handleResizeText(index, newWidth, newHeight)}
+                            onDragEnd={(x, y) => handleTextDragEnd(index, x, y)}
+
+                          />
+                        ))}
                       </Layer>
                     </Stage>
                   )}

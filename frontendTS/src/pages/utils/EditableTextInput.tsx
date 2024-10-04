@@ -5,7 +5,9 @@ export function EditableTextInput({ x, y, width, value, onChange, onKeyDown }) {
   const textareaRef = useRef(null);
 
   useEffect(() => {
-    textareaRef.current.focus();
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
   }, []);
 
   return (

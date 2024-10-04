@@ -20,10 +20,6 @@ export function EditableText({
   onDragEnd,
 }) {
 
-    // const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
-    useEffect(() => {
-        
-      }, [isEditing]);
   function handleEscapeKeys(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     console.log(e)
     if ((e.keyCode === RETURN_KEY && !e.shiftKey) || e.keyCode === ESCAPE_KEY) {

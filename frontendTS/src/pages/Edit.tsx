@@ -20,8 +20,7 @@ const Edit = () => {
   const [historyStep, setHistoryStep] = useState(0);
   const [selectedTextIndex, setSelectedTextIndex] = useState<number | null>(null);
   const [texts, setTexts] = useState<Array<any>>([]);
-
-  const {uid} = useContext(UserContext)
+  const { uid } = useContext(UserContext)
 
   const handleSelect = (cellIndex, imageIndex) => {
     setSelectedCellIndex(cellIndex);
@@ -166,34 +165,133 @@ const Edit = () => {
 
   const stageRef = useRef(null); 
 
-  const handleSave = async() => {
+  const handleSave = async () => {
     if (stageRef.current) {
-      const stageJson = stageRef.current.toJSON();
-      const stageModelJson = { user_id: uid, canvas_state: JSON.parse(stageJson)}
-      console.log('Stage JSON:', stageJson);
-      console.log(uid)
+      const stage = stageRef.current.getStage();
+  
+      // Go through each Image node and ensure the "source" attribute is set
+      stage.find('Image').forEach(imageNode => {
+        const imageUrl = imageNode.getAttr('source');
+        if (!imageUrl) {
+          const nativeImage = imageNode.image();
+          const src = nativeImage && nativeImage.src;
+          if (src) {
+            imageNode.setAttr('source', src); // Set source attribute if it's not already set
+          }
+        }
+      });
 
+      stage.find('Text').forEach(textNode => {
+        const attrs = textNode.attrs;
+        textNode.setAttr('text', attrs.text || ''); // Set text attribute
+        textNode.setAttr('x', attrs.x || 0); // Set x position
+        textNode.setAttr('y', attrs.y || 0); // Set y position
+        textNode.setAttr('fontSize', attrs.fontSize || 16); // Set font size
+        textNode.setAttr('fill', attrs.fill || 'black'); // Set fill color
+      });
+  
+      // Now save the JSON, which includes the "source" attribute for each image
+      const stageJson = stage.toJSON();
+      const stageModelJson = { user_id: uid, canvas_state: JSON.parse(stageJson) };
+  
+      console.log('Stage JSON:', stageJson);
+      console.log(uid);
+  
       try {
         await fetch('http://127.0.0.1:8000/save_canvas_state/', {
           method: "POST",
-          headers: { "Content-Type": "application/json" }, 
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(stageModelJson),
-       }).then(response => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return response.text(); 
-       })
+        }).then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.text();
+        });
       } catch (error) {
         console.error("There was an error saving the stage:", error);
-      } 
-    };
-
+      }
+    }
   };
+
+  const loadCanvasState = async () => {
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/load_canvas_state/${uid}`);
+      if (!response.ok) {
+        throw new Error('Failed to load canvas state');
+      }
+      const data = await response.json();
+      if (data) {
+        console.log("data", data);
+  
+        // Extract image data from JSON and load them
+        const loadedImages = data[0].children[0].children
+          .filter(item => item.className === 'Image')  // Find image nodes
+          .map(imageObj => {
+            const img = new window.Image();
+            img.src = imageObj.attrs.source;  // Use 'source' attribute for the URL
+            return {
+              image: img,
+              x: imageObj.attrs.x || 0,
+              y: imageObj.attrs.y || 0,
+              scaleX: imageObj.attrs.scaleX || 1,
+              scaleY: imageObj.attrs.scaleY || 1,
+              draggable: imageObj.attrs.draggable || false,
+            };
+          });
+        
+          console.log("loadedImages", loadedImages)
+  
+        // Set the loaded images in the correct cell index (assuming single cell for now)
+        setImages([loadedImages]);
+  
+        // Ensure the Konva images are drawn after images have loaded
+        loadedImages.forEach((imageObj, idx) => {
+          imageObj.image.onload = () => {
+            const updatedImages = [...images];
+            updatedImages[0][idx] = imageObj; // Update image with actual loaded object
+            setImages(updatedImages);
+          };
+        });
+
+        const loadedText = data[0].children[1].children
+        .filter(item => item.className === 'Text')  // Find text nodes
+        .map(textObj => {
+          console.log("textOBJ", textObj)
+          return {
+            text: textObj.attrs.text || '',
+            x: textObj.attrs.x || 0,
+            y: textObj.attrs.y || 0,
+            fontSize: textObj.attrs.fontSize || 16,
+            fontFamily: textObj.attrs.fontFamily || 'Arial',
+            fill: textObj.attrs.fill || 'black',
+            draggable: textObj.attrs.draggable || false,
+          };
+        });
+
+        setTexts(loadedText);
+        console.log("loadedText", loadedText)
+
+
+        // loadedText.forEach((textObj, idx) => {
+        //   textObj.text = () => {
+        //     const updatedText = [...texts];
+        //     updatedText[0][idx] = textObj; 
+        //     setTexts(updatedText);
+        //   };
+        // });
+  
+      } else {
+        console.log("Error loading canvas state:", data.error);
+      }
+    } catch (error) {
+      console.log("Error loading canvas state:", error);
+    }
+  };
+  
   
 
   useEffect(() => {
-    
     if (
       selectedCellIndex !== null &&
       selectedImageIndex !== null &&
@@ -204,6 +302,25 @@ const Edit = () => {
       
     }
   }, [selectedCellIndex, selectedImageIndex]);
+
+  useEffect(() => {
+    loadCanvasState();
+    console.log("images", images)
+    console.log("text", texts)
+  }, [uid]);
+
+  // useEffect(() => {
+  //   if (stageRef.current) {
+  //     const layer = stageRef.current.getLayers()[0];
+  //     layer.batchDraw(); 
+  //   }
+  // }, [images]);
+  useEffect(() => {
+    const editableElement = document.getElementById('editable-text-id'); // Replace with your logic
+    if (editableElement) {
+      editableElement.focus();
+    }
+  }, [texts]); 
 
   return (
     <Flex h="100%">

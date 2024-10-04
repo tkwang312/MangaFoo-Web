@@ -242,17 +242,28 @@ def save_canvas_state(state: CanvasState):
 
 
 @app.get("/load_canvas_state/{user_id}")
-def load_canvas_state(uid: int):
+def load_canvas_state(user_id: str):
     conn = psycopg2.connect(
         database="exampledb", user="docker", password="docker", host="localhost"
     )
     cur = conn.cursor()
     cur.execute(
-        "SELECT * FROM konva_states WHERE user_id = %s ORDER BY id DESC", (uid, )
+        "SELECT canvas_states FROM konva_states WHERE user_id = %s ORDER BY id DESC", (user_id, )
     )
     canvas_state = cur.fetchone()
     if canvas_state:
-        return {"canvas_state": canvas_state.canvas_state}
+        # new_state = CanvasState(
+        #     user_id=user_id,
+        #     canvas_state=canvas_state
+        # )
+
+        conn.commit()
+        cur.close()
+        conn.close()
+        return canvas_state
+    conn.commit()
+    cur.close()
+    conn.close()
     return {"error": "Canvas state not found!"}
 
 

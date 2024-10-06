@@ -13,7 +13,7 @@ const EditMenu = () => {
             fetch(`http://127.0.0.1:8000/speechbubbles/`)  
                 .then((response) => response.json())
                 .then((data) => {
-                    console.log("Fetched data:", data);  
+                    // console.log("Fetched data:", data);  
                     if (Array.isArray(data)) {
                         setAllPhotos(data);  
                     } else {

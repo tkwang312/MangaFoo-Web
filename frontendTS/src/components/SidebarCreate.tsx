@@ -42,7 +42,7 @@ const SidebarCreate = () => {
             fetch(`http://127.0.0.1:8000/images/?uid=${uid}`)  
                 .then((response) => response.json())
                 .then((data) => {
-                    console.log("Fetched data:", data);  
+                    // console.log("Fetched data:", data);  
                     if (Array.isArray(data)) {
                         setAllPhotos(data);  
                     } else {
@@ -75,10 +75,10 @@ const SidebarCreate = () => {
     }
 
     const handleImageClick = (imageId) => {
-        console.log("Image clicked with ID:", imageId);
+        // console.log("Image clicked with ID:", imageId);
 
         const index = allPhotos.findIndex(item => item['id'] === imageId);
-        console.log(allPhotos[index])
+        // console.log(allPhotos[index])
         setSelectedImage(allPhotos[index])
         setSelectedID(index)
     };

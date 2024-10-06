@@ -47,7 +47,7 @@ const Edit = () => {
     setHistory([...newHistory, deepCloneImages(newImages)]);
     setHistoryStep(newHistory.length);
   
-    console.log("History after scaling update:", newHistory);
+    // console.log("History after scaling update:", newHistory);
   };
 
   const updateImagePosition = (e, cellIndex, imageIndex) => {
@@ -67,7 +67,7 @@ const Edit = () => {
       scaleX: node.scaleX(),
       scaleY: node.scaleY(),
     };
-    console.log("Resizing:", updatedImage)
+    // console.log("Resizing:", updatedImage)
     updateImage(updatedImage, cellIndex, imageIndex);
   };
 
@@ -81,7 +81,7 @@ const Edit = () => {
     const newTexts = [...texts];
     newTexts[index].isEditing = !newTexts[index].isEditing;
     setTexts(newTexts);
-    console.log(newTexts[index].isEditing)
+    // console.log(newTexts[index].isEditing)
   };
 
   const toggleTransform = (index: number) => {
@@ -116,7 +116,7 @@ const Edit = () => {
 
       transformerRef.current.on('transformend', () => {
         if (selectedCellIndex !== null && selectedImageIndex !== null) {
-          console.log("Transform End: scaleX, scaleY update");
+          // console.log("Transform End: scaleX, scaleY update");
           handleResize(node, selectedCellIndex, selectedImageIndex); 
         }
       });
@@ -131,7 +131,7 @@ const Edit = () => {
       newImage.src = photoUrl;
       newImage.onload = () => {
         const newImages = [...images];
-        newImages[cellIndex] = [...newImages[cellIndex], { image: newImage, x: 50, y: 50 }];
+        newImages[cellIndex] = [...newImages[cellIndex], { src: photoUrl, image: newImage, x: 50, y: 50 }];
         setImages(newImages);
 
         const newHistory = history.slice(0, historyStep + 1);
@@ -164,39 +164,66 @@ const Edit = () => {
   };
 
   const stageRef = useRef(null); 
+  interface ImageData {
+    source: string;
+    x: number;
+    y: number;
+    scaleX: number;
+    scaleY: number;
+  }
+  
+  interface TextData {
+    text: string;
+    x: number;
+    y: number;
+    fontSize: number;
+    fill: string;
+  }
 
   const handleSave = async () => {
     if (stageRef.current) {
       const stage = stageRef.current.getStage();
-  
-      // Go through each Image node and ensure the "source" attribute is set
-      stage.find('Image').forEach(imageNode => {
-        const imageUrl = imageNode.getAttr('source');
-        if (!imageUrl) {
-          const nativeImage = imageNode.image();
-          const src = nativeImage && nativeImage.src;
-          if (src) {
-            imageNode.setAttr('source', src); // Set source attribute if it's not already set
-          }
-        }
-      });
+      const individualCanvases: { images: ImageData[]; texts: TextData[] }[] = [];
 
-      stage.find('Text').forEach(textNode => {
-        const attrs = textNode.attrs;
-        textNode.setAttr('text', attrs.text || ''); // Set text attribute
-        textNode.setAttr('x', attrs.x || 0); // Set x position
-        textNode.setAttr('y', attrs.y || 0); // Set y position
-        textNode.setAttr('fontSize', attrs.fontSize || 16); // Set font size
-        textNode.setAttr('fill', attrs.fill || 'black'); // Set fill color
-      });
-  
-      // Now save the JSON, which includes the "source" attribute for each image
-      const stageJson = stage.toJSON();
-      const stageModelJson = { user_id: uid, canvas_state: JSON.parse(stageJson) };
-  
-      console.log('Stage JSON:', stageJson);
-      console.log(uid);
-  
+      // console.log("stage find", stage.find("Image"))
+      // console.log(images)
+      for (let cellIndex = 0; cellIndex < images.length; cellIndex++) {
+        const cellCanvas: { images: ImageData[]; texts: TextData[] } = {
+          images: images[cellIndex],
+          texts: [],
+        };
+
+
+
+        // stage.find('Image').forEach((imageObj, imageIndex) => {
+        //   const imageUrl = imageNode.getAttr('source');
+        //   if (!imageUrl) {
+        //     const nativeImage = imageNode.image();
+        //     const src = nativeImage && nativeImage.src;
+        //     if (src) {
+        //       imageNode.setAttr('source', src); 
+        //     }
+        //   }
+        //   cellCanvas.images.push(imageNode)
+        // });
+
+        // stage.find('Text').forEach(textNode => {
+        //   const attrs = textNode.attrs;
+        //   textNode.setAttr('text', attrs.text || ''); 
+        //   textNode.setAttr('x', attrs.x || 0); 
+        //   textNode.setAttr('y', attrs.y || 0); 
+        //   textNode.setAttr('fontSize', attrs.fontSize || 16);
+        //   textNode.setAttr('fill', attrs.fill || 'black'); 
+
+        //   cellCanvas.texts.push(textNode)
+        // });
+
+      individualCanvases.push(cellCanvas);   
+      }
+      const stageModelJson = { user_id: uid, canvas_state: individualCanvases };
+      // console.log("stageModelJson", stageModelJson)
+      // console.log(images)
+
       try {
         await fetch('http://127.0.0.1:8000/save_canvas_state/', {
           method: "POST",
@@ -215,79 +242,111 @@ const Edit = () => {
   };
 
   const loadCanvasState = async () => {
-    try {
-      const response = await fetch(`http://127.0.0.1:8000/load_canvas_state/${uid}`);
-      if (!response.ok) {
-        throw new Error('Failed to load canvas state');
-      }
-      const data = await response.json();
-      if (data) {
-        console.log("data", data);
-  
-        // Extract image data from JSON and load them
-        const loadedImages = data[0].children[0].children
-          .filter(item => item.className === 'Image')  // Find image nodes
-          .map(imageObj => {
-            const img = new window.Image();
-            img.src = imageObj.attrs.source;  // Use 'source' attribute for the URL
-            return {
-              image: img,
-              x: imageObj.attrs.x || 0,
-              y: imageObj.attrs.y || 0,
-              scaleX: imageObj.attrs.scaleX || 1,
-              scaleY: imageObj.attrs.scaleY || 1,
-              draggable: imageObj.attrs.draggable || false,
-            };
-          });
+    if (uid) {
+      fetch(`http://127.0.0.1:8000/load_canvas_state/${uid}`)
+        .then((response) => response.json())
+        .then((data) => {
+            console.log("fetch data:", data);
+            console.log(data.type)
+            if (data) {
+                console.log("woohoo1")
+                data = data[0]
+                for (let index = 0; index < data.length; index++){
+                  const newImages = [];
+                  const imagesArray = data
+                  console.log(imagesArray)
+                  const imgs = imagesArray[index]
+                  console.log("woohoo2")
+                  console.log("please work", imgs)
+                  const imgs2 = imgs['images']
+                  console.log("imgs2", imgs2)
+                  for (let imgIndex = 0; imgIndex < imgs2.length; imgIndex++){
+                    const imageObj = imgs2[imgIndex]
+                    console.log("woohoo3", imageObj)
+
+                    const img = new window.Image();
+                    img.src = imageObj.src
+                    newImages.push({
+                      image: img,
+                      src: imageObj.src,
+                      x: imageObj.x || 0,
+                      y: imageObj.y || 0,
+                      scaleX: imageObj.scaleX || 0.5,
+                      scaleY: imageObj.scaleY || 0.5,
+                      draggable: imageObj.draggable || true,
+                    });
+                    setImages([newImages]);
+            
+                    newImages.forEach((imageObj, idx) => {
+                      imageObj.image.onload = () => {
+                        const updatedImages = [...images];
+                        updatedImages[index][idx] = imageObj;
+                        setImages(updatedImages);
+                      };
+                    });
+                  }
+                }
+            } else {
+                console.error("Expected an array but got:", data);
+                // setAllPhotos([]);
+            }
+          })
+          .catch((error) => console.error('Error fetching data:', error));
+    }
+  }
+       
+        // const loadedImages = data[0].children[0].children
+        //   .filter(item => item.className === 'Image') 
+        //   .map(imageObj => {
+        //     const img = new window.Image();
+        //     img.src = imageObj.attrs.source;  
+        //     return {
+        //       image: img,
+        //       x: imageObj.attrs.x || 0,
+        //       y: imageObj.attrs.y || 0,
+        //       scaleX: imageObj.attrs.scaleX || 1,
+        //       scaleY: imageObj.attrs.scaleY || 1,
+        //       draggable: imageObj.attrs.draggable || false,
+        //     };
+        //   });
         
-          console.log("loadedImages", loadedImages)
+        //   console.log("loadedImages", loadedImages)
   
-        // Set the loaded images in the correct cell index (assuming single cell for now)
-        setImages([loadedImages]);
+        // setImages([loadedImages]);
   
-        // Ensure the Konva images are drawn after images have loaded
-        loadedImages.forEach((imageObj, idx) => {
-          imageObj.image.onload = () => {
-            const updatedImages = [...images];
-            updatedImages[0][idx] = imageObj; // Update image with actual loaded object
-            setImages(updatedImages);
-          };
-        });
-
-        const loadedText = data[0].children[1].children
-        .filter(item => item.className === 'Text')  // Find text nodes
-        .map(textObj => {
-          console.log("textOBJ", textObj)
-          return {
-            text: textObj.attrs.text || '',
-            x: textObj.attrs.x || 0,
-            y: textObj.attrs.y || 0,
-            fontSize: textObj.attrs.fontSize || 16,
-            fontFamily: textObj.attrs.fontFamily || 'Arial',
-            fill: textObj.attrs.fill || 'black',
-            draggable: textObj.attrs.draggable || false,
-          };
-        });
-
-        setTexts(loadedText);
-        console.log("loadedText", loadedText)
-
-
-        // loadedText.forEach((textObj, idx) => {
-        //   textObj.text = () => {
-        //     const updatedText = [...texts];
-        //     updatedText[0][idx] = textObj; 
-        //     setTexts(updatedText);
+        // loadedImages.forEach((imageObj, idx) => {
+        //   imageObj.image.onload = () => {
+        //     const updatedImages = [...images];
+        //     updatedImages[0][idx] = imageObj;
+        //     setImages(updatedImages);
         //   };
         // });
-  
-      } else {
-        console.log("Error loading canvas state:", data.error);
-      }
-    } catch (error) {
-      console.log("Error loading canvas state:", error);
-    }
-  };
+
+        // const loadedText = data[0].children[1].children
+        // .filter(item => item.className === 'Text')
+        // .map(textObj => {
+        //   console.log("textOBJ", textObj)
+        //   return {
+        //     text: textObj.attrs.text || '',
+        //     x: textObj.attrs.x || 0,
+        //     y: textObj.attrs.y || 0,
+        //     fontSize: textObj.attrs.fontSize || 16,
+        //     fontFamily: textObj.attrs.fontFamily || 'Arial',
+        //     fill: textObj.attrs.fill || 'black',
+        //     draggable: textObj.attrs.draggable || false,
+        //   };
+        // });
+
+        // setTexts(loadedText);
+        // console.log("loadedText", loadedText)
+
+  //     } else {
+  //       console.log("Error loading canvas state:", data.error);
+  //     }
+  //   } catch (error) {
+  //     console.log("Error loading canvas state:", error);
+  //   }
+  // };
   
   
 
@@ -305,8 +364,8 @@ const Edit = () => {
 
   useEffect(() => {
     loadCanvasState();
-    console.log("images", images)
-    console.log("text", texts)
+    // console.log("images", images)
+    // console.log("text", texts)
   }, [uid]);
 
   // useEffect(() => {

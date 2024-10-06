@@ -68,7 +68,7 @@ class SpeechBubbleModel(BaseModel):
 
 class CanvasState(BaseModel):
     user_id: str
-    canvas_state: Dict[str, Any]
+    canvas_state: List[Dict[str, Any]]
 
 
 @app.get("/")
@@ -231,8 +231,10 @@ def save_canvas_state(state: CanvasState):
         user_id=state.user_id,
         canvas_state=state.canvas_state
     )
+
+
     curr.execute(
-        "INSERT INTO konva_states (user_id, canvas_states) VALUES (%s, %s)",
+        "INSERT INTO konva_states2 (user_id, canvas_states) VALUES (%s, %s)",
         (user_id, canvas_state) 
     )
     conn.commit()
@@ -248,7 +250,7 @@ def load_canvas_state(user_id: str):
     )
     cur = conn.cursor()
     cur.execute(
-        "SELECT canvas_states FROM konva_states WHERE user_id = %s ORDER BY id DESC", (user_id, )
+        "SELECT canvas_states FROM konva_states2 WHERE user_id = %s ORDER BY id DESC", (user_id, )
     )
     canvas_state = cur.fetchone()
     if canvas_state:

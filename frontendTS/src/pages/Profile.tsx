@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { Button, Input, Box } from "@chakra-ui/react";
+import { Button, Input, Box, Heading, Stack } from "@chakra-ui/react";
 import UserContext from '../authentication/UserContext';
 
 const Profile = () => {
@@ -51,26 +51,28 @@ const Profile = () => {
 
 
   return (
-    <>
-      <div>Profile</div>
-      <Input type="username" placeholder={username} onChange={(e) => { setUsername(e.target.value) }}/>
-      <Input type="password" placeholder={password} onChange={(e) => { setPassword(e.target.value) }}/>
-      <Input
-        type="file"
-        accept="image/*"
-        onChange={(e) => setPFP(e.target.files[0])}
-        display="none"
-        id="fileInput"
-      />
-      <Button
-        onClick={() => document.getElementById('fileInput').click()} // Trigger the file input click
-      >
-        Upload Picture
-      </Button>
-
-      <Button onClick={handleSubmit}>Submit</Button>
-      {pfp && <Box as="img" src={pfp} alt="Profile Picture" boxSize="300px"/>}
-    </>
+    <Box maxW="400px" mx="auto" mt="10" p="4" borderWidth="1px" borderRadius="lg" boxShadow="lg">
+      <Heading mb="4" textAlign="center">Profile</Heading>
+      <Stack spacing="4">
+        <Input type="username" placeholder="Enter new username" value={un} onChange={(e) => setUsername(e.target.value)} />
+        <Input type="password" placeholder="Enter new password" value={pass} onChange={(e) => setPassword(e.target.value)} />
+        <Input
+          type="file"
+          accept="image/*"
+          onChange={(e) => setPFP(e.target.files[0])}
+          display="none"
+          id="fileInput"
+        />
+        <Button
+          colorScheme="blue"
+          onClick={() => document.getElementById('fileInput').click()}
+        >
+          Upload Profile Picture
+        </Button>
+        <Button colorScheme="teal" onClick={handleSubmit}>Submit</Button>
+        {pfp && <img src={pfp} alt="Profile Picture" boxSize="150px" objectFit="cover" borderRadius="full" mx="auto" />}
+      </Stack>
+    </Box>
   );
 };
 

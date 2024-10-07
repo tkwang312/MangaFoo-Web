@@ -160,9 +160,6 @@ async def change_username_password(user: UsernamePasswordModel):
     print(password)
 
 @auth_router.post("/pfpupload", response_model=PFPModel)
-# def change_pfp(uid: Annotated[str, Form], file: Annotated[UploadFile, File()]):
-#     user_id = uid
-#     pfpfile = file
 async def change_pfp(
     user_id: str = Form(...),  # Use Form for non-file data
     file:  UploadFile = File(...)  # Use File for file uploads
@@ -172,9 +169,6 @@ async def change_pfp(
     print(pfpfile.filename)
     print(pfpfile.content_type)
     
-    # buffer = BytesIO()
-    # imgstr = base64.b64encode(buffer.getvalue())
-    # buffer.seek(0)
 
     try:
         s3.upload_fileobj(pfpfile.file, BUCKET_NAME, pfpfile.filename)
@@ -217,44 +211,3 @@ async def change_pfp(
 
     return PFPModel(user_id=user_id, pfpurl=uploaded_file_url)
 
-
-# @auth_router.post("/pfpupload", response_model=PFPModel)
-# async def change_pfp(user_id: int, file: UploadFile = File(...)):
-#     # Handle file upload
-#     file_content = await file.read()
-#     s3.upload_fileobj(file.file, BUCKET_NAME, file.filename)
-
-#     uploaded_file_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{file.filename}"
-
-#     # Connect to database
-#     conn = psycopg2.connect(
-#         database="exampledb", user="docker", password="docker", host="localhost"
-#     )
-#     curr = conn.cursor()
-
-#     try:
-#         curr.execute(
-#             "SELECT pfpurl FROM users WHERE user_id = %s",
-#             (user_id,)
-#         )
-#         current_pfp_url = curr.fetchone()
-
-#         if current_pfp_url is None:
-#             raise HTTPException(status_code=404, detail="User not found")
-        
-#         curr.execute(
-#             "UPDATE users SET pfpurl = %s WHERE user_id = %s",
-#             (uploaded_file_url, user_id)
-#         )
-
-#         conn.commit()
-
-#     except Exception as e:
-#         conn.rollback()
-#         raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}")
-
-#     finally:
-#         curr.close()
-#         conn.close()
-
-#     return PFPModel(user_id=user_id, pfpurl=uploaded_file_url)

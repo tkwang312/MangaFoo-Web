@@ -232,7 +232,6 @@ def save_canvas_state(state: CanvasState):
         canvas_state=state.canvas_state
     )
 
-
     curr.execute(
         "INSERT INTO konva_states2 (user_id, canvas_states) VALUES (%s, %s)",
         (user_id, canvas_state) 

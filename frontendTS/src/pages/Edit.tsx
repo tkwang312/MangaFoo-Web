@@ -201,9 +201,6 @@ const Edit = () => {
   const handleSave = async () => {
     if (stageRef.current) {
       const individualCanvases: { images: ImageData[]; texts: TextData[] }[] = [];
-
-      // console.log("stage find", stage.find("Image"))
-      // console.log(images)
       for (let cellIndex = 0; cellIndex < images.length; cellIndex++) {
         const cellCanvas: { images: ImageData[]; texts: TextData[] } = {
           images: images[cellIndex],

@@ -39,7 +39,9 @@ const EditMenu = () => {
                     });
                 })
                 .finally(() => setLoading(false)); 
+        }
     }, [uid, updateToggle]);
+    
 
     const handleImageClick = (imageId) => {
         const index = allPhotos.findIndex(item => item['id'] === imageId);

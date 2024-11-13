@@ -85,7 +85,7 @@ const SidebarCreate = () => {
     };
 
     return (
-        <Flex>
+        <Flex height="100vh"> {/* Ensure the entire sidebar takes full vertical space */}
             <Flex
                 h="100vh"
                 w="60px"

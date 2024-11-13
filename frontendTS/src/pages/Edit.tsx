@@ -7,14 +7,14 @@ import EditMenu from '../components/EditMenu';
 import { EditableText } from "./utils/EditableText";
 import UserContext from '../authentication/UserContext';
 
-const WIDTH = 500;
-const HEIGHT = 700;
+const WIDTH = 225;
+const HEIGHT = 350;
 
 const Edit = () => {
-  const [images, setImages] = useState<Array<Array<any>>>([[], [], [], []]); 
-  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null); 
-  const [selectedCellIndex, setSelectedCellIndex] = useState<number | null>(null); 
-  const transformerRef = useRef<any>(null); 
+  const [images, setImages] = useState<Array<Array<any>>>([[], [], [], []]);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+  const [selectedCellIndex, setSelectedCellIndex] = useState<number | null>(null);
+  const transformerRef = useRef<any>(null);
   const imageRefs = useRef([]);
   const [history, setHistory] = useState<Array<Array<Array<any>>>>([[[...images]]]);
   const [historyStep, setHistoryStep] = useState(0);
@@ -39,13 +39,13 @@ const Edit = () => {
   const updateImage = (updatedImage, cellIndex, imageIndex) => {
     const newImages = deepCloneImages(images);
     newImages[cellIndex][imageIndex] = updatedImage;
-  
+
     setImages(newImages);
-  
+
     const newHistory = history.slice(0, historyStep + 1);
     setHistory([...newHistory, deepCloneImages(newImages)]);
     setHistoryStep(newHistory.length);
-    };
+  };
 
   const updateImagePosition = (e, cellIndex, imageIndex) => {
     const img = images[cellIndex][imageIndex];
@@ -54,7 +54,7 @@ const Edit = () => {
       x: e.target.x(),
       y: e.target.y(),
     };
-  
+
     updateImage(updatedImage, cellIndex, imageIndex);
   };
 
@@ -86,9 +86,9 @@ const Edit = () => {
     if (!Array.isArray(newTexts[cellIndex])) {
       newTexts[cellIndex] = [];
     }
-  
+
     newTexts[cellIndex] = [
-      ...newTexts[cellIndex], 
+      ...newTexts[cellIndex],
       { x: 100, y: 100, text: "New Text", width: 200, isEditing: false, isTransforming: false }
     ];
     setTexts(newTexts);
@@ -120,22 +120,22 @@ const Edit = () => {
     setTexts(newTexts);
   };
 
-    const handleTextDragEnd = (cellIndex, textIndex, x, y) => {
-      const newTexts = [...texts];
-      newTexts[cellIndex][textIndex].x = x;
-      newTexts[cellIndex][textIndex].y = y;
-      setTexts(newTexts);
+  const handleTextDragEnd = (cellIndex, textIndex, x, y) => {
+    const newTexts = [...texts];
+    newTexts[cellIndex][textIndex].x = x;
+    newTexts[cellIndex][textIndex].y = y;
+    setTexts(newTexts);
   };
 
   const addTransformer = (node) => {
     if (node && transformerRef.current) {
-      transformerRef.current.nodes([node]); 
+      transformerRef.current.nodes([node]);
       transformerRef.current.getLayer().batchDraw();
 
       transformerRef.current.on('transformend', () => {
         if (selectedCellIndex !== null && selectedImageIndex !== null) {
           // console.log("Transform End: scaleX, scaleY update");
-          handleResize(node, selectedCellIndex, selectedImageIndex); 
+          handleResize(node, selectedCellIndex, selectedImageIndex);
         }
       });
     }
@@ -162,7 +162,7 @@ const Edit = () => {
   const handleDragOver = (event) => {
     event.preventDefault();
   };
-  
+
   const handleUndo = () => {
     if (historyStep === 0) {
       return;
@@ -181,7 +181,7 @@ const Edit = () => {
     setHistoryStep(historyStep + 1);
   };
 
-  const stageRef = useRef(null); 
+  const stageRef = useRef(null);
   interface ImageData {
     source: string;
     x: number;
@@ -189,7 +189,7 @@ const Edit = () => {
     scaleX: number;
     scaleY: number;
   }
-  
+
   interface TextData {
     text: string;
     x: number;
@@ -206,7 +206,7 @@ const Edit = () => {
           images: images[cellIndex],
           texts: texts[cellIndex],
         };
-      individualCanvases.push(cellCanvas);   
+        individualCanvases.push(cellCanvas);
       }
       console.log("texts1", texts)
       const stageModelJson = { user_id: uid, canvas_state: individualCanvases };
@@ -236,59 +236,59 @@ const Edit = () => {
       fetch(`http://127.0.0.1:8000/load_canvas_state/${uid}`)
         .then((response) => response.json())
         .then((data) => {
-            if (data) {
-                data = data[0]
-                const newTexts = []
-                for (let index = 0; index < data.length; index++){
-                  const newImages = [];
-                  const imagesArray = data
-                  const imgs = imagesArray[index]['images']
-                  for (let imgIndex = 0; imgIndex < imgs.length; imgIndex++){
-                    const imageObj = imgs[imgIndex]
-                    const img = new window.Image();
-                    img.src = imageObj.src
-                    newImages.push({
-                      image: img,
-                      src: imageObj.src,
-                      x: imageObj.x || 0,
-                      y: imageObj.y || 0,
-                      scaleX: imageObj.scaleX || 0.5,
-                      scaleY: imageObj.scaleY || 0.5,
-                      draggable: imageObj.draggable || true,
-                    });
-                    setImages([newImages]);
-            
-                    newImages.forEach((imageObj, idx) => {
-                      imageObj.image.onload = () => {
-                        const updatedImages = [...images];
-                        updatedImages[index][idx] = imageObj;
-                        setImages(updatedImages);
-                      };
-                    });
-                  }
-                  const txt = imagesArray[index]['texts'];
-                  const currentTexts = [];
-                  for (let txtIndex = 0; txtIndex < txt.length; txtIndex++) {
-                    const textObj = txt[txtIndex];
-                    currentTexts.push({
-                      text: textObj.text || '',
-                      x: textObj.x || 0,
-                      y: textObj.y || 0,
-                      fontSize: textObj.fontSize || 16,
-                      fontFamily: textObj.fontFamily || 'Arial',
-                      fill: textObj.fill || 'black',
-                      draggable: textObj.draggable || true,
-                    });
-                  }
-                  newTexts.push(currentTexts);
+          if (data) {
+            data = data[0]
+            const newTexts = []
+            for (let index = 0; index < data.length; index++) {
+              const newImages = [];
+              const imagesArray = data
+              const imgs = imagesArray[index]['images']
+              for (let imgIndex = 0; imgIndex < imgs.length; imgIndex++) {
+                const imageObj = imgs[imgIndex]
+                const img = new window.Image();
+                img.src = imageObj.src
+                newImages.push({
+                  image: img,
+                  src: imageObj.src,
+                  x: imageObj.x || 0,
+                  y: imageObj.y || 0,
+                  scaleX: imageObj.scaleX || 0.5,
+                  scaleY: imageObj.scaleY || 0.5,
+                  draggable: imageObj.draggable || true,
+                });
+                setImages([newImages]);
 
-                }
-                setTexts(newTexts); 
-            } else {
-                console.error("Expected an array but got:", data);
+                newImages.forEach((imageObj, idx) => {
+                  imageObj.image.onload = () => {
+                    const updatedImages = [...images];
+                    updatedImages[index][idx] = imageObj;
+                    setImages(updatedImages);
+                  };
+                });
+              }
+              const txt = imagesArray[index]['texts'];
+              const currentTexts = [];
+              for (let txtIndex = 0; txtIndex < txt.length; txtIndex++) {
+                const textObj = txt[txtIndex];
+                currentTexts.push({
+                  text: textObj.text || '',
+                  x: textObj.x || 0,
+                  y: textObj.y || 0,
+                  fontSize: textObj.fontSize || 16,
+                  fontFamily: textObj.fontFamily || 'Arial',
+                  fill: textObj.fill || 'black',
+                  draggable: textObj.draggable || true,
+                });
+              }
+              newTexts.push(currentTexts);
+
             }
-          })
-          .catch((error) => console.error('Error fetching data:', error));
+            setTexts(newTexts);
+          } else {
+            console.error("Expected an array but got:", data);
+          }
+        })
+        .catch((error) => console.error('Error fetching data:', error));
     }
   }
 
@@ -300,7 +300,7 @@ const Edit = () => {
       imageRefs.current[selectedCellIndex][selectedImageIndex]
     ) {
       addTransformer(imageRefs.current[selectedCellIndex][selectedImageIndex]);
-      
+
     }
   }, [selectedCellIndex, selectedImageIndex]);
 
@@ -313,110 +313,109 @@ const Edit = () => {
     if (editableElement) {
       editableElement.focus();
     }
-  }, [texts]); 
+  }, [texts]);
 
   return (
-<Flex h="100%" direction="row">
-  <Box w="20%" minW="300px">
-    <SidebarCreate />
-  </Box>
-  
-  <Box as="main" flex="1"  display="flex" flexDirection="column">
-    <ChakraProvider>
-      <HStack spacing={4} mb={4} justifyContent="flex-start" bg="gray.100">
-        <Button onClick={handleUndo} isDisabled={historyStep === 0}>
-          Undo
-        </Button>
-        <Button onClick={handleRedo} isDisabled={historyStep === history.length - 1}>
-          Redo
-        </Button>
-        <Button onClick={() => handleAddText(selectedCellIndex)}>
-          Add Text Box
-        </Button>
-        <Button onClick={handleSave}>
-          Save
-        </Button>
-      </HStack>
-
-      {/* Centered Canvas (Horizontally) */}
-      <Box w="1100px" h="1400px" borderWidth="1px" borderRadius="lg" overflow="visible" bg="white" alignSelf="center">
-        <SimpleGrid spacing={4} columns={2} p="10px">
-          {images.map((cellImages, cellIndex) => (
-            <Box
-              key={cellIndex}
-              w={`${WIDTH}px`}
-              h={`${HEIGHT}px`}
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-              bg="white"
-              position="relative"
-              overflow="visible"
-              onDrop={(e) => handleDrop(e, cellIndex)} 
-              onDragOver={handleDragOver}
-              onClick={() => setSelectedCellIndex(cellIndex)}
-              border={selectedCellIndex === cellIndex ? '5px solid #63b3ed' : '3px solid black'}
-            >
-              {cellImages.length === 0 ? (
-                <img src={plus_sign} alt="plus-sign" style={{ width: '15%' }} />
-              ) : (
-                <Stage ref={stageRef} width={WIDTH} height={HEIGHT}>
-                  <Layer>
-                    {cellImages.map((imgObj, imageIndex) => (
-                      <KonvaImage
-                        key={imageIndex}
-                        image={imgObj.image}
-                        x={imgObj.x}
-                        y={imgObj.y}
-                        scaleX={imgObj.scaleX || 0.5}
-                        scaleY={imgObj.scaleY || 0.5}
-                        draggable
-                        onDragEnd={(e) => updateImagePosition(e, cellIndex, imageIndex)}
-                        ref={(node) => {
-                          imageRefs.current[cellIndex] = imageRefs.current[cellIndex] || [];
-                          imageRefs.current[cellIndex][imageIndex] = node;
-                          if (selectedCellIndex === cellIndex && selectedImageIndex === imageIndex) {
-                            addTransformer(node);
-                          }
-                        }}
-                        onClick={() => handleSelectImage(cellIndex, imageIndex)}
-                      />
-                    ))}
-                    {selectedCellIndex === cellIndex && selectedImageIndex !== null && (
-                      <Transformer ref={transformerRef} />
-                    )}
-                  </Layer>
-                  <Layer>
-                    {texts[cellIndex]?.map((textObj, textIndex) => (
-                      <EditableText
-                        key={textIndex}
-                        x={textObj.x}
-                        y={textObj.y}
-                        text={textObj.text}
-                        isEditing={textObj.isEditing}
-                        isTransforming={textObj.isTransforming}
-                        onToggleEdit={() => toggleEdit(cellIndex, textIndex)}
-                        onToggleTransform={() => toggleTransform(cellIndex, textIndex)}
-                        onChange={(newText) => handleTextChange(cellIndex, textIndex, newText)}
-                        onResize={(newWidth, newHeight) => handleResizeText(cellIndex, textIndex, newWidth, newHeight)}
-                        onDragEnd={(x, y) => handleTextDragEnd(cellIndex, textIndex, x, y)}
-                      />
-                    ))}
-                  </Layer>
-                </Stage>
-              )}
-            </Box>
-          ))}
-        </SimpleGrid>
+    <Flex h="100vh" direction="row">
+      <Box w="20%" minW="300px">
+        <SidebarCreate />
       </Box>
-    </ChakraProvider>
-  </Box>
 
-  {/* Edit Menu */}
-  <Box w="20%" minW="300px">
-    <EditMenu />
-  </Box>
-</Flex>
+      <Box as="main" flex="1" display="flex" flexDirection="column">
+        <ChakraProvider>
+          <HStack spacing={4} mb={4} justifyContent="flex-start" bg="gray.100">
+            <Button onClick={handleUndo} isDisabled={historyStep === 0}>
+              Undo
+            </Button>
+            <Button onClick={handleRedo} isDisabled={historyStep === history.length - 1}>
+              Redo
+            </Button>
+            <Button onClick={() => handleAddText(selectedCellIndex)}>
+              Add Text Box
+            </Button>
+            <Button onClick={handleSave}>
+              Save
+            </Button>
+          </HStack>
+
+          <Box w="500px" h="750px" borderWidth="1px" borderRadius="lg" overflow="visible" bg="white" alignSelf="center">
+            <SimpleGrid spacing={4} columns={2} p="10px">
+              {images.map((cellImages, cellIndex) => (
+                <Box
+                  key={cellIndex}
+                  w={`${WIDTH}px`}
+                  h={`${HEIGHT}px`}
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  bg="white"
+                  position="relative"
+                  overflow="visible"
+                  onDrop={(e) => handleDrop(e, cellIndex)}
+                  onDragOver={handleDragOver}
+                  onClick={() => setSelectedCellIndex(cellIndex)}
+                  border={selectedCellIndex === cellIndex ? '5px solid #63b3ed' : '3px solid black'}
+                >
+                  {cellImages.length === 0 ? (
+                    <img src={plus_sign} alt="plus-sign" style={{ width: '15%' }} />
+                  ) : (
+                    <Stage ref={stageRef} width={WIDTH} height={HEIGHT}>
+                      <Layer>
+                        {cellImages.map((imgObj, imageIndex) => (
+                          <KonvaImage
+                            key={imageIndex}
+                            image={imgObj.image}
+                            x={imgObj.x}
+                            y={imgObj.y}
+                            scaleX={imgObj.scaleX || 0.5}
+                            scaleY={imgObj.scaleY || 0.5}
+                            draggable
+                            onDragEnd={(e) => updateImagePosition(e, cellIndex, imageIndex)}
+                            ref={(node) => {
+                              imageRefs.current[cellIndex] = imageRefs.current[cellIndex] || [];
+                              imageRefs.current[cellIndex][imageIndex] = node;
+                              if (selectedCellIndex === cellIndex && selectedImageIndex === imageIndex) {
+                                addTransformer(node);
+                              }
+                            }}
+                            onClick={() => handleSelectImage(cellIndex, imageIndex)}
+                          />
+                        ))}
+                        {selectedCellIndex === cellIndex && selectedImageIndex !== null && (
+                          <Transformer ref={transformerRef} />
+                        )}
+                      </Layer>
+                      <Layer>
+                        {texts[cellIndex]?.map((textObj, textIndex) => (
+                          <EditableText
+                            key={textIndex}
+                            x={textObj.x}
+                            y={textObj.y}
+                            text={textObj.text}
+                            isEditing={textObj.isEditing}
+                            isTransforming={textObj.isTransforming}
+                            onToggleEdit={() => toggleEdit(cellIndex, textIndex)}
+                            onToggleTransform={() => toggleTransform(cellIndex, textIndex)}
+                            onChange={(newText) => handleTextChange(cellIndex, textIndex, newText)}
+                            onResize={(newWidth, newHeight) => handleResizeText(cellIndex, textIndex, newWidth, newHeight)}
+                            onDragEnd={(x, y) => handleTextDragEnd(cellIndex, textIndex, x, y)}
+                          />
+                        ))}
+                      </Layer>
+                    </Stage>
+                  )}
+                </Box>
+              ))}
+            </SimpleGrid>
+          </Box>
+        </ChakraProvider>
+      </Box>
+
+      {/* Edit Menu */}
+      <Box w="20%" minW="300px">
+        <EditMenu />
+      </Box>
+    </Flex>
 
 
   );

@@ -317,7 +317,7 @@ const Edit = () => {
 
   return (
     <Flex h="100vh" direction="row">
-      <Box w="20%" minW="300px">
+      <Box w="25%" minW="300px">
         <SidebarCreate />
       </Box>
 

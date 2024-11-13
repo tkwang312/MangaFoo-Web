@@ -126,7 +126,7 @@ const SidebarCreate = () => {
             </Flex>
 
             <Flex
-                w={navSize === "small" ? "0px" : { base: "300px", lg: "400px" }}
+                w={navSize === "small" ? "0px" : { base: "300px", lg: "300px" }}
                 bg="purple.100"
                 flexBasis={'auto'}
                 overflow={'auto'}

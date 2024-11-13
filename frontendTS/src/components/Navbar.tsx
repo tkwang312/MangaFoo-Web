@@ -28,14 +28,14 @@ const Navbar = () => {
 
   return (
     <Flex as="nav" p="5px" bg="blue.100">
-      <Heading as="h1">APP</Heading>
+      <Heading as="h1">MangaFooAI</Heading>
       <Spacer />
       <HStack spacing="20px">
         <Text>{username}</Text>
         <Box boxSize='30px' onClick={handleClickProfile}>
           <Image src={pfp} />
         </Box>
-        <Button colorScheme="purple" onClick={handleClickHome}>Create</Button>
+        <Button colorScheme="purple" onClick={handleClickHome}>Home</Button>
       </HStack>
 
     </Flex>

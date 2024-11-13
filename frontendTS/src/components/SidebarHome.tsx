@@ -7,7 +7,7 @@ const SidebarHome = () => {
   return (
         <List color="white" fontSize="1.2em" spacing={2}>
             <ListItem>
-                <NavLink to="/">
+                <NavLink to="/dashboard">
                     <ListIcon as={IoIosImages} />
                     Dashboard
                 </NavLink>

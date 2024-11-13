@@ -1,7 +1,8 @@
 import React, { useState, useContext, useEffect } from 'react'
-import { Image, Flex, IconButton, Button, VStack, Heading, SimpleGrid, useToast } from "@chakra-ui/react"
+import { Image, Flex, IconButton, Button, VStack, Heading, SimpleGrid, useToast, Text } from "@chakra-ui/react"
 import { useNavigate } from "react-router-dom"
-import { FiChevronLeft, FiChevronRight, FiUser, FiCalendar, FiSettings } from 'react-icons/fi'
+import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
+import { IoMdPerson, IoIosCreate, IoMdImages } from "react-icons/io";
 import UserContext from '../authentication/UserContext'
 
 const SidebarCreate = () => {
@@ -88,41 +89,49 @@ const SidebarCreate = () => {
         <Flex height="100vh"> {/* Ensure the entire sidebar takes full vertical space */}
             <Flex
                 h="100vh"
-                w="60px"
+                w="70px"
                 flexDir="column"
                 bg="purple.200"
-                p="5%"
+                p="2%"
                 justifyContent="space-between"
             >
                 <Flex flexDir="column" alignItems="center">
                     <IconButton
                         mt={5}
+                        key="characters"
                         icon={navSize === "small" ? <FiChevronRight /> : <FiChevronLeft />}
                         onClick={() => changeNavSize(navSize === "small" ? "large" : "small")}
                         bg="purple.100"
                     />
-                    <IconButton
-                        background="none"
-                        mt={5}
-                        _hover={{ background: 'purple.300' }}
-                        icon={<FiUser />}
-                        onClick={handleClickGenerate}
-                    />
-                    <IconButton
-                        background="none"
-                        mt={5}
-                        _hover={{ background: 'purple.300' }}
-                        icon={<FiCalendar />}
-                        onClick={handleClickEdit}
-                    />
-                    <IconButton
-                        background="none"
-                        mt={5}
-                        _hover={{ background: 'purple.300' }}
-                        icon={<FiSettings />}
-                        onClick={handleClickProfile}
-                    />
+                    <VStack spacing={0} align="center" mt={3}>
+                        <IconButton
+                            background="none"
+                            _hover={{ background: 'purple.300' }}
+                            icon={<IoMdImages />}
+                            onClick={handleClickGenerate}
+                        />
+                        <Text fontSize="xs">generate</Text>
+                    </VStack>
+                    <VStack spacing={0} align="center" mt={3}>
+                        <IconButton
+                            background="none"
+                            _hover={{ background: 'purple.300' }}
+                            icon={<IoIosCreate />}
+                            onClick={handleClickEdit}
+                        />
+                        <Text fontSize="xs">edit</Text>
+                    </VStack>
+                    <VStack spacing={0} align="center" mt={3}>
+                        <IconButton
+                            background="none"
+                            _hover={{ background: 'purple.300' }}
+                            icon={<IoMdPerson />}
+                            onClick={handleClickProfile}
+                        />
+                        <Text fontSize="xs">profile</Text>
+                    </VStack>
                 </Flex>
+
             </Flex>
 
             <Flex

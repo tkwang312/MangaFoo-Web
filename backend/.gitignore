@@ -1,2 +1,5 @@
 keys.py
 __pycache__
+aws_lambda_artifact.zip
+requirements.txt
+dependencies

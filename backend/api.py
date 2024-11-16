@@ -17,10 +17,12 @@ from auth import auth_router
 import uvicorn
 from typing import List, Dict, Any
 import json
+from mangum import Mangum
 
 
 # python -m uvicorn api:app --reload
 app = FastAPI()
+handler = Mangum(app)
 
 my_images = []
 BUCKET_NAME = 'mangapics'
